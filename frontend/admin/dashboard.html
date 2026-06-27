@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Dashboard — RSVP Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family:'Lato',sans-serif; background:#0f1e17; color:#fdf8f0; }
+    .card { background:rgba(255,255,255,.04); border:1px solid rgba(201,168,76,.25); border-radius:6px; transition:border-color .3s,transform .3s,box-shadow .3s; }
+    .card:hover { border-color:rgba(201,168,76,.7); transform:translateY(-4px); box-shadow:0 16px 40px rgba(0,0,0,.4); }
+    .badge { background:linear-gradient(135deg,rgba(201,168,76,.15),rgba(201,168,76,.08)); border:1px solid rgba(201,168,76,.3); }
+    .btn-edit { background:linear-gradient(135deg,#c9a84c,#8b6914); }
+    .btn-edit:hover { opacity:.9; }
+    .btn-preview { border:1px solid rgba(201,168,76,.5); color:#c9a84c; }
+    .btn-preview:hover { background:rgba(201,168,76,.1); }
+    .sidebar { background:rgba(0,0,0,.3); border-right:1px solid rgba(201,168,76,.15); }
+    .nav-item { transition:background .2s; border-radius:4px; }
+    .nav-item:hover,.nav-item.active { background:rgba(201,168,76,.1); }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+    .fade-in { animation:fadeIn .5s ease forwards; }
+    .skeleton { background:linear-gradient(90deg,rgba(255,255,255,.05) 25%,rgba(255,255,255,.1) 50%,rgba(255,255,255,.05) 75%); background-size:200% auto; animation:skeleton 1.5s linear infinite; }
+    @keyframes skeleton { 0%{background-position:200% center} 100%{background-position:-200% center} }
+    .stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:36px; }
+    @media(max-width:640px) { .stats-row { grid-template-columns:1fr; } }
+    .top-header { flex-wrap:wrap; height:auto; min-height:60px; gap:10px; padding:10px 24px; }
+    @media(max-width:480px) { .top-header { padding:10px 16px; } }
+  </style>
+</head>
+<body style="min-height:100vh;display:flex;flex-direction:column;">
+
+  <!-- Top Nav -->
+  <header class="top-header" style="background:rgba(0,0,0,.4);border-bottom:1px solid rgba(201,168,76,.2);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;backdrop-filter:blur(8px);">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <svg width="28" height="28" viewBox="0 0 28 28"><path d="M19 4.5A10 10 0 1 0 19 23.5 8 8 0 1 1 19 4.5Z" stroke="#c9a84c" stroke-width="1.2" fill="none"/></svg>
+      <span style="font-family:'Playfair Display',serif;color:#e8d5a3;font-size:1.1rem;font-weight:600;">RSVP Admin</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:16px;">
+      <div id="user-name" style="color:#c9a84c;font-size:.85rem;opacity:.8;"></div>
+      <a href="/admin/logout" style="display:flex;align-items:center;gap:6px;color:rgba(232,213,163,.5);font-size:.8rem;text-decoration:none;border:1px solid rgba(201,168,76,.2);padding:6px 12px;border-radius:3px;transition:all .2s;" onmouseover="this.style.color='#c9a84c';this.style.borderColor='rgba(201,168,76,.5)'" onmouseout="this.style.color='rgba(232,213,163,.5)';this.style.borderColor='rgba(201,168,76,.2)'">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 2H2v10h3M9 4l3 3-3 3M12 7H6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Log Keluar
+      </a>
+    </div>
+  </header>
+
+  <!-- Body -->
+  <div style="flex:1;padding:32px 24px;max-width:1100px;margin:0 auto;width:100%;">
+
+    <!-- Page title -->
+    <div class="fade-in" style="margin-bottom:32px;">
+      <h2 style="font-family:'Playfair Display',serif;font-size:1.8rem;color:#e8d5a3;margin-bottom:6px;">Senarai Template</h2>
+      <p style="color:rgba(232,213,163,.5);font-size:.9rem;">Pilih template untuk diedit atau pratonton.</p>
+    </div>
+
+    <!-- Stats row -->
+    <div class="fade-in stats-row">
+      <div style="background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.2);border-radius:6px;padding:20px 24px;">
+        <p style="color:rgba(201,168,76,.6);font-size:.72rem;text-transform:uppercase;letter-spacing:.2em;margin-bottom:6px;">Jumlah Template</p>
+        <p id="stat-total" style="font-family:'Playfair Display',serif;font-size:2rem;color:#c9a84c;">—</p>
+      </div>
+      <div style="background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.2);border-radius:6px;padding:20px 24px;">
+        <p style="color:rgba(201,168,76,.6);font-size:.72rem;text-transform:uppercase;letter-spacing:.2em;margin-bottom:6px;">Pengantin Lelaki</p>
+        <p id="stat-groom" style="font-family:'Playfair Display',serif;font-size:1.1rem;color:#e8d5a3;">—</p>
+      </div>
+      <div style="background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.2);border-radius:6px;padding:20px 24px;">
+        <p style="color:rgba(201,168,76,.6);font-size:.72rem;text-transform:uppercase;letter-spacing:.2em;margin-bottom:6px;">Pengantin Perempuan</p>
+        <p id="stat-bride" style="font-family:'Playfair Display',serif;font-size:1.1rem;color:#e8d5a3;">—</p>
+      </div>
+    </div>
+
+    <!-- Template cards -->
+    <div id="template-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:24px;">
+      <!-- Loading skeleton -->
+      <div class="skeleton" style="height:260px;border-radius:6px;"></div>
+    </div>
+
+  </div>
+
+  <script>
+    // Load user
+    fetch('/api/me').then(r=>r.json()).then(u => {
+      document.getElementById('user-name').textContent = 'Selamat datang, ' + u.name;
+    });
+
+    // Load templates
+    fetch('/api/templates').then(r=>r.json()).then(list => {
+      document.getElementById('stat-total').textContent = list.length;
+      if (list[0]) {
+        document.getElementById('stat-groom').textContent = list[0].groomName || '—';
+        document.getElementById('stat-bride').textContent = list[0].brideName || '—';
+      }
+
+      const grid = document.getElementById('template-grid');
+      grid.innerHTML = '';
+
+      list.forEach((t, i) => {
+        const card = document.createElement('div');
+        card.className = 'card fade-in';
+        card.style.cssText = `padding:0;overflow:hidden;animation-delay:${i*0.1}s;`;
+        card.innerHTML = `
+          <!-- Thumbnail -->
+          <div style="height:140px;background:linear-gradient(160deg,#1a3d2b,#0d2318);position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;">
+            <div style="position:absolute;inset:0;background:radial-gradient(circle at 60% 40%,rgba(201,168,76,.12),transparent 70%);"></div>
+            <div style="text-align:center;position:relative;z-index:1;">
+              <svg width="44" height="44" viewBox="0 0 44 44" style="margin:0 auto 8px;"><path d="M30 7A15.5 15.5 0 1 0 30 37 12.5 12.5 0 1 1 30 7Z" stroke="#c9a84c" stroke-width="1.2" fill="none"/></svg>
+              <p style="font-family:'Playfair Display',serif;color:#c9a84c;font-size:.85rem;">${t.groomName} &amp; ${t.brideName}</p>
+              <p style="color:rgba(201,168,76,.5);font-size:.7rem;margin-top:2px;">${t.date}</p>
+            </div>
+          </div>
+          <!-- Info -->
+          <div style="padding:20px 22px;">
+            <div style="display:flex;align-items:start;justify-content:space-between;margin-bottom:10px;">
+              <div>
+                <h3 style="font-family:'Playfair Display',serif;color:#e8d5a3;font-size:1.05rem;margin-bottom:4px;">${t.name}</h3>
+                <span style="font-size:.7rem;color:rgba(201,168,76,.7);background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.2);padding:2px 8px;border-radius:20px;">${t.theme}</span>
+              </div>
+              <span style="font-size:.68rem;color:rgba(201,168,76,.5);background:rgba(201,168,76,.05);border:1px solid rgba(201,168,76,.15);padding:2px 8px;border-radius:20px;white-space:nowrap;">Template ${i+1}</span>
+            </div>
+            <div style="display:flex;gap:10px;margin-top:16px;">
+              <a href="/admin/template/${t.id}/edit" class="btn-edit" style="flex:1;padding:10px;border:none;border-radius:3px;color:#1a3d2b;font-weight:700;font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;text-decoration:none;text-align:center;transition:opacity .2s;">
+                ✏️ Edit
+              </a>
+              <a href="${t.preview}" target="_blank" class="btn-preview" style="flex:1;padding:10px;border-radius:3px;font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;text-decoration:none;text-align:center;transition:all .2s;background:transparent;">
+                👁 Pratonton
+              </a>
+            </div>
+            <a href="/admin/template/${t.id}/guests" class="btn-preview" style="display:block;margin-top:10px;padding:10px;border-radius:3px;font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;text-decoration:none;text-align:center;transition:all .2s;background:transparent;">
+              👥 Senarai Tetamu
+            </a>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }).catch(() => {
+      document.getElementById('template-grid').innerHTML = '<p style="color:rgba(232,213,163,.4);">Ralat memuatkan template.</p>';
+    });
+  </script>
+</body>
+</html>

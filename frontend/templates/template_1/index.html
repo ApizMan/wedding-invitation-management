@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{PAGE_TITLE}}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=Amiri:wght@400;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            gold: 'var(--color-gold)', 'gold-light': 'var(--color-gold-light)', 'gold-dark': 'var(--color-gold-dark)',
+            forest: 'var(--color-forest)', 'forest-mid': 'var(--color-forest-mid)', cream: 'var(--color-cream)', parchment: 'var(--color-parchment)',
+          },
+          fontFamily: {
+            playfair: ['"Playfair Display"', 'serif'],
+            cormorant: ['"Cormorant Garamond"', 'serif'],
+            amiri: ['Amiri', 'serif'],
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    :root {
+{{THEME_VARS}}
+    }
+    * { box-sizing: border-box; scroll-behavior: smooth; }
+    body { font-family: 'Lato', sans-serif; background: var(--color-cream); overflow-x: hidden; }
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: var(--color-cream); }
+    ::-webkit-scrollbar-thumb { background: var(--color-gold); border-radius: 3px; }
+    .gold-shimmer {
+      background: linear-gradient(90deg,var(--color-gold-dark) 0%,var(--color-gold) 25%,#f5e6a3 50%,var(--color-gold) 75%,var(--color-gold-dark) 100%);
+      background-size: 300% auto; -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent; background-clip: text;
+      animation: shimmer 5s linear infinite;
+    }
+    @keyframes shimmer { 0% { background-position:0% center; } 100% { background-position:300% center; } }
+    .float-anim { animation: float 5s ease-in-out infinite; }
+    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-14px)} }
+    .reveal { opacity:0; transform:translateY(38px); transition:opacity .85s ease,transform .85s ease; }
+    .reveal.visible { opacity:1; transform:translateY(0); }
+    #opening { transition: opacity .9s ease, transform .9s ease; }
+    #opening.dismiss { opacity:0; transform:scale(1.06); pointer-events:none; }
+    @keyframes ring-pulse { 0%{transform:scale(.9);opacity:.6} 100%{transform:scale(1.6);opacity:0} }
+    .ring-pulse  { animation: ring-pulse 3s ease-out infinite; }
+    .ring-pulse-2{ animation: ring-pulse 3s ease-out 1s infinite; }
+    .ring-pulse-3{ animation: ring-pulse 3s ease-out 2s infinite; }
+    .petal { position:fixed; top:-30px; pointer-events:none; z-index:1; animation:petalFall linear infinite; will-change:transform; }
+    @keyframes petalFall {
+      0%  {transform:translateY(-30px) rotate(0deg) translateX(0);opacity:.9}
+      50% {transform:translateY(50vh) rotate(180deg) translateX(20px);opacity:.7}
+      100%{transform:translateY(110vh) rotate(360deg) translateX(-10px);opacity:0}
+    }
+    .card-lift { transition:transform .3s ease,box-shadow .3s ease; }
+    .card-lift:hover { transform:translateY(-7px); box-shadow:0 22px 44px rgba(var(--color-forest-rgb),.15); }
+    .tl-dot { width:14px; height:14px; background:var(--color-gold); border-radius:50%; border:3px solid var(--color-cream); box-shadow:0 0 0 2px var(--color-gold); flex-shrink:0; }
+    .cd-box { background:linear-gradient(145deg,#1f4a32,var(--color-forest-mid)); border:1px solid rgba(var(--color-gold-rgb),.5); border-radius:6px; }
+    .orn-divider { display:flex; align-items:center; gap:12px; justify-content:center; }
+    .orn-divider::before,.orn-divider::after { content:''; display:block; height:1px; width:70px; }
+    .orn-divider::before { background:linear-gradient(90deg,transparent,var(--color-gold)); }
+    .orn-divider::after  { background:linear-gradient(90deg,var(--color-gold),transparent); }
+    .contact-card { transition:background .3s,transform .3s; }
+    .contact-card:hover { background:linear-gradient(135deg,var(--color-forest),var(--color-forest-mid))!important; transform:scale(1.03); }
+    .contact-card:hover p,.contact-card:hover span,.contact-card:hover a { color:var(--color-gold-light)!important; }
+    .forest-section { background:linear-gradient(160deg,var(--color-forest) 0%,#0d2318 100%); }
+    .corner-deco { position:absolute; opacity:.25; pointer-events:none; }
+    @keyframes border-pulse { 0%,100%{box-shadow:0 0 0 0 rgba(var(--color-gold-rgb),.6)} 50%{box-shadow:0 0 0 12px rgba(var(--color-gold-rgb),0)} }
+    .btn-pulse { animation:border-pulse 2.2s infinite; }
+    @keyframes vinylSpin { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
+    #music-btn:hover #music-tooltip { opacity:1!important; }
+    #vinyl-ring.paused { animation-play-state:paused; }
+    .music-note { position:fixed; pointer-events:none; z-index:199; font-size:16px; color:var(--color-gold); opacity:0; animation:noteFloat 2.5s ease-out forwards; }
+    @keyframes noteFloat { 0%{opacity:.9;transform:translateY(0) scale(1)} 100%{opacity:0;transform:translateY(-70px) scale(.7)} }
+
+    /* Bottom Nav */
+    #bottom-nav { position:fixed; left:0; right:0; bottom:0; z-index:150; display:none; }
+    #bottom-nav .bn-inner { background:linear-gradient(160deg,var(--color-forest) 0%,#0d2318 100%); border-top:1px solid rgba(var(--color-gold-rgb),.3); display:grid; padding:8px 4px calc(8px + env(safe-area-inset-bottom)); }
+    #bottom-nav button { background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:4px; padding:6px 2px; color:var(--color-gold-light); font-family:'Lato',sans-serif; font-size:10px; letter-spacing:.02em; cursor:pointer; transition:opacity .2s,transform .2s; opacity:.8; }
+    #bottom-nav button:active { transform:scale(.92); }
+    #bottom-nav button:hover { opacity:1; }
+    #bottom-nav svg { width:21px; height:21px; }
+
+    /* Bottom Sheets */
+    .sheet-overlay { position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:300; opacity:0; pointer-events:none; transition:opacity .3s ease; }
+    .sheet-overlay.open { opacity:1; pointer-events:auto; }
+    .bottom-sheet { position:fixed; left:0; right:0; bottom:0; z-index:301; background:var(--color-cream); border-radius:18px 18px 0 0; max-height:82vh; overflow-y:auto; transform:translateY(100%); transition:transform .35s cubic-bezier(.32,.72,0,1); box-shadow:0 -10px 40px rgba(0,0,0,.25); padding-bottom:env(safe-area-inset-bottom); }
+    .bottom-sheet.open { transform:translateY(0); }
+    .sheet-handle { width:40px; height:4px; background:rgba(var(--color-forest-rgb),.25); border-radius:3px; margin:10px auto 4px; }
+    .sheet-header { display:flex; align-items:center; justify-content:space-between; padding:10px 20px 14px; border-bottom:1px solid rgba(var(--color-gold-rgb),.2); }
+    .sheet-header h3 { font-family:'Playfair Display',serif; color:var(--color-forest); font-size:1.35rem; }
+    .sheet-close { background:none; border:none; font-size:22px; line-height:1; color:var(--color-forest); opacity:.5; cursor:pointer; padding:4px; }
+    .sheet-close:hover { opacity:1; }
+    .sheet-body { padding:20px; }
+    .sheet-field { margin-bottom:14px; }
+    .sheet-field label { display:block; font-size:12px; color:var(--color-forest); opacity:.7; margin-bottom:5px; font-family:'Lato',sans-serif; letter-spacing:.03em; }
+    .sheet-field input[type=text], .sheet-field input[type=tel], .sheet-field textarea {
+      width:100%; border:1px solid rgba(var(--color-forest-rgb),.25); border-radius:6px; padding:10px 12px; font-family:'Lato',sans-serif; font-size:14px; background:#fff; color:var(--color-forest); outline:none;
+    }
+    .sheet-field input:focus, .sheet-field textarea:focus { border-color:var(--color-gold); }
+    .sheet-radio-group { display:flex; gap:10px; }
+    .sheet-radio-group label { flex:1; display:flex; align-items:center; justify-content:center; gap:6px; border:1px solid rgba(var(--color-forest-rgb),.25); border-radius:6px; padding:10px; cursor:pointer; font-size:13px; color:var(--color-forest); transition:background .2s,border-color .2s; }
+    .sheet-radio-group input { accent-color: var(--color-gold); }
+    .sheet-radio-group label.checked { background:rgba(var(--color-gold-rgb),.12); border-color:var(--color-gold); }
+    .sheet-submit-btn { width:100%; background:linear-gradient(135deg,var(--color-forest),var(--color-forest-mid)); color:var(--color-gold-light); border:1px solid var(--color-gold); border-radius:6px; padding:12px; font-size:14px; letter-spacing:.04em; cursor:pointer; transition:opacity .2s; }
+    .sheet-submit-btn:hover { opacity:.88; }
+    .sheet-submit-btn:disabled { opacity:.5; cursor:default; }
+    .sheet-feedback { font-size:13px; margin-top:10px; text-align:center; font-family:'Cormorant Garamond',serif; font-style:italic; }
+    .sheet-feedback.ok { color:#2d5a40; }
+    .sheet-feedback.err { color:#a33; }
+    .map-link-card, .bank-info-card { display:flex; align-items:center; gap:14px; border:1px solid rgba(var(--color-gold-rgb),.3); border-radius:8px; padding:14px; margin-bottom:12px; text-decoration:none; background:rgba(var(--color-gold-rgb),.04); }
+    .map-link-card:hover { background:rgba(var(--color-gold-rgb),.1); }
+    .map-link-icon { width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; background:#fff; box-shadow:0 1px 4px rgba(0,0,0,.15); }
+    .map-link-text p:first-child { font-family:'Playfair Display',serif; color:var(--color-forest); font-size:15px; }
+    .map-link-text p:last-child { font-size:12px; color:var(--color-forest); opacity:.6; }
+    .gift-qr-img { width:100%; max-width:240px; display:block; margin:0 auto 16px; border:1px solid rgba(var(--color-gold-rgb),.3); border-radius:8px; padding:10px; background:#fff; }
+    .bank-info-card { display:block; }
+    .bank-info-card p.bi-label { font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--color-gold); margin-bottom:2px; }
+    .bank-info-card p.bi-value { font-family:'Playfair Display',serif; color:var(--color-forest); font-size:16px; }
+    .copy-btn { float:right; font-size:11px; border:1px solid var(--color-gold); color:var(--color-forest); background:none; border-radius:4px; padding:2px 8px; cursor:pointer; }
+    .gift-items-grid { display:flex; flex-direction:column; gap:12px; margin-bottom:8px; }
+    .gift-item-card { display:flex; align-items:center; gap:14px; border:1px solid rgba(var(--color-gold-rgb),.3); border-radius:8px; padding:10px; background:rgba(var(--color-gold-rgb),.04); }
+    .gift-item-card.reserved { opacity:.6; }
+    .gift-item-img { width:64px; height:64px; flex-shrink:0; object-fit:cover; border-radius:6px; background:#fff; }
+    .gift-item-info { flex:1; min-width:0; }
+    .gift-item-name { font-family:'Playfair Display',serif; color:var(--color-forest); font-size:14px; margin-bottom:6px; }
+    .gift-item-status.reserved { font-size:11px; color:#2d5a40; background:rgba(76,175,80,.15); border:1px solid rgba(76,175,80,.4); border-radius:20px; padding:4px 10px; display:inline-block; }
+    .gift-item-reserve-btn { font-size:11px; background:var(--color-forest); color:var(--color-gold-light); border:1px solid var(--color-gold); border-radius:20px; padding:5px 12px; cursor:pointer; transition:opacity .2s; white-space:nowrap; }
+    .gift-item-reserve-btn:hover { opacity:.85; }
+    .reserve-form-box { margin-top:10px; padding:14px; border:1px solid rgba(var(--color-gold-rgb),.35); border-radius:8px; background:rgba(var(--color-gold-rgb),.06); }
+    .reserve-form-box p.rf-title { font-family:'Playfair Display',serif; color:var(--color-forest); font-size:14px; margin-bottom:10px; }
+    .wishes-list { display:grid; gap:16px; }
+    @media(min-width:640px) { .wishes-list { grid-template-columns:repeat(2,1fr); } }
+    .wish-card { border:1px solid rgba(var(--color-gold-rgb),.35); border-radius:8px; padding:18px 20px; background:rgba(255,255,255,.05); }
+    .wish-name { font-family:'Playfair Display',serif; color:var(--color-gold); font-size:16px; margin-bottom:5px; }
+    .wish-message { font-size:14px; color:var(--color-gold-light); opacity:.85; font-family:'Cormorant Garamond',serif; font-style:italic; line-height:1.5; }
+    .wish-empty { font-size:14px; color:var(--color-gold-light); opacity:.5; text-align:center; font-style:italic; padding:20px 0; grid-column:1/-1; }
+
+    /* Pre-Wedding Gallery */
+    .pw-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:14px; }
+    @media(min-width:640px) { .pw-grid { grid-template-columns:repeat(3,1fr); } }
+    .pw-grid-item { aspect-ratio:3/4; overflow:hidden; border-radius:8px; border:1px solid rgba(var(--color-gold-rgb),.25); cursor:pointer; }
+    .pw-grid-item img { width:100%; height:100%; object-fit:cover; transition:transform .4s ease; display:block; }
+    .pw-grid-item:hover img { transform:scale(1.08); }
+    .pw-slideshow { position:relative; aspect-ratio:4/3; max-width:640px; margin:0 auto; border-radius:10px; overflow:hidden; border:1px solid rgba(var(--color-gold-rgb),.3); background:#000; }
+    .pw-slide { position:absolute; inset:0; opacity:0; transition:opacity .5s ease; }
+    .pw-slide.active { opacity:1; }
+    .pw-slide img { width:100%; height:100%; object-fit:cover; }
+    .pw-nav { position:absolute; top:50%; transform:translateY(-50%); background:rgba(0,0,0,.4); color:#fff; border:none; width:38px; height:38px; border-radius:50%; cursor:pointer; font-size:14px; display:flex; align-items:center; justify-content:center; transition:background .2s; }
+    .pw-nav:hover { background:rgba(0,0,0,.65); }
+    .pw-prev { left:12px; } .pw-next { right:12px; }
+    .pw-dots { display:flex; justify-content:center; gap:8px; margin-top:14px; }
+    .pw-dot { width:9px; height:9px; border-radius:50%; border:1px solid var(--color-gold); background:transparent; cursor:pointer; padding:0; }
+    .pw-dot.active { background:var(--color-gold); }
+    .pw-lightbox { position:fixed; inset:0; background:rgba(0,0,0,.92); z-index:400; display:none; align-items:center; justify-content:center; }
+    .pw-lightbox.open { display:flex; }
+    .pw-lightbox img { max-width:92vw; max-height:85vh; object-fit:contain; border-radius:4px; }
+    .pw-lightbox-close { position:absolute; top:18px; right:22px; background:none; border:none; color:#fff; font-size:32px; line-height:1; cursor:pointer; opacity:.8; }
+    .pw-lightbox-close:hover { opacity:1; }
+  </style>
+</head>
+<body class="min-h-screen">
+
+  <!-- Audio -->
+  <audio id="bg-audio" loop preload="auto">
+    <source src="{{MUSIC_URL}}">
+  </audio>
+
+  <!-- Petals -->
+  <div id="petals" class="fixed inset-0 overflow-hidden pointer-events-none" style="z-index:2;"></div>
+
+  <!-- Music Button -->
+  <div id="music-btn" onclick="toggleMusic()"
+    style="display:none;position:fixed;bottom:calc(80px + env(safe-area-inset-bottom));right:24px;z-index:200;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--color-forest),var(--color-forest-mid));border:1.5px solid var(--color-gold);box-shadow:0 4px 20px rgba(0,0,0,.35);cursor:pointer;align-items:center;justify-content:center;transition:transform .2s,box-shadow .2s;"
+    onmouseover="this.style.transform='scale(1.1)';this.style.boxShadow='0 6px 28px rgba(var(--color-gold-rgb),.4)';"
+    onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 4px 20px rgba(0,0,0,.35)';">
+    <div id="vinyl-ring" style="position:absolute;width:52px;height:52px;border-radius:50%;border:1.5px solid rgba(var(--color-gold-rgb),.35);animation:vinylSpin 4s linear infinite;"></div>
+    <svg id="icon-play" width="20" height="20" viewBox="0 0 20 20" fill="none" style="position:relative;z-index:1;margin-left:2px;"><path d="M5 3l12 7-12 7V3z" fill="var(--color-gold)"/></svg>
+    <svg id="icon-pause" width="20" height="20" viewBox="0 0 20 20" fill="none" style="display:none;position:relative;z-index:1;"><rect x="4" y="3" width="4" height="14" rx="1" fill="var(--color-gold)"/><rect x="12" y="3" width="4" height="14" rx="1" fill="var(--color-gold)"/></svg>
+    <div id="music-tooltip" style="position:absolute;bottom:62px;right:0;white-space:nowrap;background:rgba(var(--color-forest-rgb),.95);border:1px solid rgba(var(--color-gold-rgb),.4);color:var(--color-gold-light);font-size:11px;padding:5px 10px;border-radius:4px;font-family:'Lato',sans-serif;letter-spacing:.05em;opacity:0;transition:opacity .3s;pointer-events:none;">Aku Nak Kahwin – Andi Bernadee</div>
+  </div>
+
+  <!-- ══ OPENING SCREEN ══ -->
+  <div id="opening" class="fixed inset-0 flex flex-col items-center justify-center forest-section" style="z-index:100;">
+    <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+      <div class="ring-pulse absolute w-72 h-72 rounded-full border border-gold opacity-30"></div>
+      <div class="ring-pulse-2 absolute w-72 h-72 rounded-full border border-gold opacity-20"></div>
+      <div class="ring-pulse-3 absolute w-72 h-72 rounded-full border border-gold opacity-10"></div>
+    </div>
+    <div class="float-anim mb-5" style="z-index:1;">
+      <svg width="72" height="72" viewBox="0 0 72 72" fill="none">
+        <path d="M49 11A27 27 0 1 0 49 61 21.5 21.5 0 1 1 49 11Z" stroke="var(--color-gold)" stroke-width="1.4" fill="none"/>
+      </svg>
+    </div>
+    <p class="font-amiri text-2xl text-gold-light mb-1 tracking-wide text-center px-4">بِسْمِ اللهِ الرَّحْمٰنِ الرَّحِيْمِ</p>
+    <p class="text-gold-light text-xs tracking-widest uppercase mb-6 opacity-70" style="letter-spacing:.35em;">Walimatul Urus</p>
+    <div class="text-center mb-6">
+      <h1 class="font-playfair text-white text-4xl md:text-5xl leading-snug">{{GROOM_NAME}}</h1>
+      <div class="flex items-center justify-center gap-3 my-3">
+        <div class="h-px w-14" style="background:linear-gradient(90deg,transparent,var(--color-gold))"></div>
+        <span class="text-gold text-xl">✦</span>
+        <span class="font-cormorant text-gold-light italic text-base">&amp;</span>
+        <span class="text-gold text-xl">✦</span>
+        <div class="h-px w-14" style="background:linear-gradient(90deg,var(--color-gold),transparent)"></div>
+      </div>
+      <h1 class="font-playfair text-white text-4xl md:text-5xl leading-snug">{{BRIDE_NAME}}</h1>
+    </div>
+    <p class="text-gold-light text-sm mb-8 tracking-widest font-cormorant italic">{{EVENT_DATE_SHORT}} &nbsp;·&nbsp; {{EVENT_LOCATION}}</p>
+    <button onclick="openInvitation()" class="btn-pulse border border-gold text-gold-light px-10 py-3 text-sm uppercase tracking-widest hover:bg-gold hover:text-forest transition-all duration-300 cursor-pointer font-lato">
+      Buka Jemputan
+    </button>
+    <p class="text-gold-light text-xs mt-8 opacity-40 tracking-widest">﹡ Tatal ke bawah untuk melihat maklumat lengkap ﹡</p>
+  </div>
+
+  <!-- ══ MAIN CONTENT ══ -->
+  <main id="main" style="opacity:0;transition:opacity 1s ease;">
+
+    <!-- HERO -->
+    <section class="relative min-h-screen flex flex-col items-center justify-center overflow-hidden px-6" style="background:linear-gradient(180deg,var(--color-cream) 0%,var(--color-tan) 100%);">
+      <svg class="corner-deco" style="top:16px;left:16px;" width="90" height="90" viewBox="0 0 90 90"><path d="M8,8L8,38M8,8L38,8" stroke="var(--color-gold)" stroke-width="1.8" fill="none"/><path d="M8,52L8,68M8,68L24,68" stroke="var(--color-gold)" stroke-width="1" fill="none" opacity=".6"/></svg>
+      <svg class="corner-deco" style="top:16px;right:16px;" width="90" height="90" viewBox="0 0 90 90"><path d="M82,8L82,38M82,8L52,8" stroke="var(--color-gold)" stroke-width="1.8" fill="none"/><path d="M82,52L82,68M82,68L66,68" stroke="var(--color-gold)" stroke-width="1" fill="none" opacity=".6"/></svg>
+      <svg class="corner-deco" style="bottom:16px;left:16px;" width="90" height="90" viewBox="0 0 90 90"><path d="M8,82L8,52M8,82L38,82" stroke="var(--color-gold)" stroke-width="1.8" fill="none"/></svg>
+      <svg class="corner-deco" style="bottom:16px;right:16px;" width="90" height="90" viewBox="0 0 90 90"><path d="M82,82L82,52M82,82L52,82" stroke="var(--color-gold)" stroke-width="1.8" fill="none"/></svg>
+      <div class="max-w-3xl mx-auto text-center z-10">
+        <div class="reveal mb-6">
+          <p class="font-amiri text-3xl md:text-4xl text-forest mb-3">بِسْمِ اللهِ الرَّحْمٰنِ الرَّحِيْمِ</p>
+          <div class="orn-divider"><svg width="20" height="20" viewBox="0 0 20 20"><path d="M10 1L11.5 8.5 19 10 11.5 11.5 10 19 8.5 11.5 1 10 8.5 8.5Z" fill="var(--color-gold)"/></svg></div>
+          <p class="text-forest font-cormorant italic text-lg mt-4 tracking-wider">Dengan segala kerendahan hati dan penuh kesyukuran,</p>
+          <p class="text-forest font-cormorant italic text-base opacity-80">kami memohon kehadiran Tuan / Puan ke majlis perkahwinan</p>
+        </div>
+        <div class="float-anim my-10 reveal">
+          <h1 class="gold-shimmer font-playfair text-5xl md:text-7xl font-bold leading-tight">{{GROOM_NAME}}</h1>
+          <p class="font-cormorant text-forest italic text-xl mt-1">{{GROOM_BIN}}</p>
+          <div class="flex items-center justify-center gap-4 my-7">
+            <div class="h-px flex-1 max-w-28" style="background:linear-gradient(90deg,transparent,var(--color-gold))"></div>
+            <div class="text-center"><p class="text-gold text-2xl leading-none">✦</p><p class="font-cormorant text-forest italic text-sm my-1">bersama</p><p class="text-gold text-2xl leading-none">✦</p></div>
+            <div class="h-px flex-1 max-w-28" style="background:linear-gradient(90deg,var(--color-gold),transparent)"></div>
+          </div>
+          <h1 class="gold-shimmer font-playfair text-5xl md:text-7xl font-bold leading-tight">{{BRIDE_NAME}}</h1>
+          <p class="font-cormorant text-forest italic text-xl mt-1">{{BRIDE_BINTI}}</p>
+        </div>
+        <div class="reveal">
+          <div class="orn-divider mb-4"><div class="w-2 h-2 rounded-full bg-gold"></div></div>
+          <p class="font-playfair text-forest text-xl">{{EVENT_DATE_DISPLAY}}</p>
+          <p class="text-gold text-xs tracking-widest uppercase mt-1" style="letter-spacing:.3em;">{{EVENT_LOCATION}}</p>
+        </div>
+      </div>
+      <div class="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce opacity-60">
+        <svg width="26" height="26" viewBox="0 0 26 26" fill="none"><path d="M13 5v16M6 14l7 7 7-7" stroke="var(--color-gold)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+    </section>
+
+    <!-- PRE-WEDDING -->
+    <section class="py-20 px-6" style="background:var(--color-tan);display:{{PREWEDDING_SECTION_DISPLAY}};">
+      <div class="max-w-5xl mx-auto">
+        <div class="text-center mb-14 reveal">
+          <p class="text-gold text-xs tracking-widest uppercase mb-2" style="letter-spacing:.3em;">Detik Kenangan</p>
+          <h2 class="font-playfair text-forest text-4xl md:text-5xl">Pre-Wedding</h2>
+          <div class="orn-divider mt-4"><div class="w-2 h-2 rounded-full bg-gold"></div></div>
+        </div>
+        <div class="reveal">
+          {{PREWEDDING_HTML}}
+        </div>
+      </div>
+    </section>
+
+    <!-- QURAN VERSE -->
+    <section class="py-20 px-6 forest-section">
+      <div class="max-w-3xl mx-auto text-center reveal">
+        <div class="mb-6"><svg width="36" height="36" viewBox="0 0 36 36" class="mx-auto opacity-70"><path d="M18 2L20 14.5 32.5 18 20 21.5 18 34 16 21.5 3.5 18 16 14.5Z" fill="none" stroke="var(--color-gold)" stroke-width="1.3"/></svg></div>
+        <p class="font-amiri text-3xl md:text-4xl text-white leading-loose mb-8 text-right px-2" dir="rtl">وَمِنْ آيَاتِهِ أَنْ خَلَقَ لَكُم مِّنْ أَنفُسِكُمْ أَزْوَاجًا لِّتَسْكُنُوا إِلَيْهَا وَجَعَلَ بَيْنَكُم مَّوَدَّةً وَرَحْمَةً</p>
+        <div class="h-px mb-6" style="background:linear-gradient(90deg,transparent,var(--color-gold),transparent)"></div>
+        <p class="font-cormorant italic text-gold-light text-lg md:text-xl leading-relaxed">"Dan di antara tanda-tanda kekuasaan-Nya ialah Dia menciptakan untuk kamu isteri-isteri dari jenismu sendiri, supaya kamu cenderung dan merasa tenteram kepadanya, dan dijadikan-Nya di antaramu rasa kasih dan sayang."</p>
+        <p class="text-gold text-sm mt-5 tracking-widest">— Surah Ar-Rum : 21</p>
+      </div>
+    </section>
+
+    <!-- NOTICE -->
+    <section class="py-10 px-6" style="background:var(--color-tan);">
+      <div class="max-w-2xl mx-auto text-center reveal">
+        <div class="border border-gold rounded-sm p-6 md:p-8" style="background:rgba(var(--color-gold-rgb),.06);">
+          <svg width="28" height="28" viewBox="0 0 28 28" class="mx-auto mb-3"><circle cx="14" cy="14" r="12" fill="none" stroke="var(--color-gold)" stroke-width="1.4"/><path d="M14 9v7M14 20v1.5" stroke="var(--color-gold)" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <p class="font-cormorant italic text-forest text-base md:text-lg leading-relaxed">{{NOTICE_TEXT}}</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- EVENT DETAILS -->
+    <section class="py-20 px-6" style="background:var(--color-cream);">
+      <div class="max-w-5xl mx-auto">
+        <div class="text-center mb-14 reveal">
+          <p class="text-gold text-xs tracking-widest uppercase mb-2" style="letter-spacing:.3em;">Maklumat Majlis</p>
+          <h2 class="font-playfair text-forest text-4xl md:text-5xl">Tarikh &amp; Lokasi</h2>
+          <div class="orn-divider mt-4"><div class="w-2 h-2 rounded-full bg-gold"></div></div>
+        </div>
+        <div class="grid md:grid-cols-2 gap-8">
+          <div class="card-lift reveal border border-gold rounded-sm p-8 text-center" style="background:linear-gradient(145deg,var(--color-cream),var(--color-parchment));">
+            <div class="w-16 h-16 mx-auto mb-5 rounded-full flex items-center justify-center" style="background:linear-gradient(135deg,var(--color-forest),var(--color-forest-mid));">
+              <svg width="30" height="30" viewBox="0 0 30 30" fill="none"><path d="M15 4C12 4 10 6 10 9C10 11 11 12.5 11 12.5L19 12.5C19 12.5 20 11 20 9C20 6 18 4 15 4Z" fill="none" stroke="var(--color-gold)" stroke-width="1.4"/><rect x="6" y="12.5" width="18" height="13" rx="1" fill="none" stroke="var(--color-gold)" stroke-width="1.4"/><path d="M12 25.5V20C12 18.5 13.2 17.5 15 17.5C16.8 17.5 18 18.5 18 20V25.5" fill="none" stroke="var(--color-gold)" stroke-width="1.2"/><line x1="15" y1="1" x2="15" y2="4" stroke="var(--color-gold)" stroke-width="1.4" stroke-linecap="round"/><circle cx="15" cy="1" r="1" fill="var(--color-gold)"/></svg>
+            </div>
+            <p class="text-gold text-xs tracking-widest uppercase mb-2" style="letter-spacing:.25em;">Akad Nikah</p>
+            <h3 class="font-playfair text-forest text-2xl mb-1">{{AKAD_LOCATION_NAME}}</h3>
+            <p class="text-forest font-cormorant italic text-base mb-4 opacity-70">{{AKAD_LOCATION_DETAIL}}</p>
+            <div class="h-px mb-4" style="background:linear-gradient(90deg,transparent,var(--color-gold),transparent)"></div>
+            <p class="font-cormorant text-forest text-lg mb-1">{{AKAD_DATE}}</p>
+            <p class="text-gold font-bold text-sm tracking-wider">{{AKAD_TIME}}</p>
+          </div>
+          <div class="card-lift reveal border border-gold rounded-sm p-8 text-center" style="background:linear-gradient(145deg,var(--color-cream),var(--color-parchment));">
+            <div class="w-16 h-16 mx-auto mb-5 rounded-full flex items-center justify-center" style="background:linear-gradient(135deg,var(--color-forest),var(--color-forest-mid));">
+              <svg width="30" height="30" viewBox="0 0 30 30" fill="none"><rect x="3" y="14" width="24" height="12" rx="1" fill="none" stroke="var(--color-gold)" stroke-width="1.4"/><path d="M3 14Q15 6 27 14" fill="none" stroke="var(--color-gold)" stroke-width="1.4"/><line x1="15" y1="6" x2="15" y2="3" stroke="var(--color-gold)" stroke-width="1.4" stroke-linecap="round"/><path d="M11 26V21H14V26M16 26V21H19V26" fill="none" stroke="var(--color-gold)" stroke-width="1.2"/></svg>
+            </div>
+            <p class="text-gold text-xs tracking-widest uppercase mb-2" style="letter-spacing:.25em;">Majlis Resepsi</p>
+            <h3 class="font-playfair text-forest text-2xl mb-1">{{MAJLIS_HALL}}</h3>
+            <p class="text-forest font-cormorant italic text-base mb-4 opacity-70">{{MAJLIS_SUBLOC}}</p>
+            <div class="h-px mb-4" style="background:linear-gradient(90deg,transparent,var(--color-gold),transparent)"></div>
+            <p class="font-cormorant text-forest text-lg mb-1">{{MAJLIS_DATE}}</p>
+            <p class="text-gold font-bold text-sm tracking-wider mb-3">{{MAJLIS_TIME}}</p>
+            <p class="text-forest text-sm leading-relaxed opacity-75">{{MAJLIS_ADDRESS}}</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- COUNTDOWN -->
+    <section class="py-16 px-6 forest-section">
+      <div class="max-w-3xl mx-auto text-center reveal">
+        <p class="text-gold text-xs tracking-widest uppercase mb-2" style="letter-spacing:.3em;">Kiraan Masa</p>
+        <h2 class="font-playfair text-white text-3xl md:text-4xl mb-10">Menghitung Hari Bahagia</h2>
+        <div class="grid grid-cols-4 gap-3 md:gap-5">
+          <div class="cd-box py-5 px-2 text-center"><div id="cd-days"  class="font-playfair text-gold text-4xl md:text-5xl font-bold leading-none">00</div><div class="text-gold-light text-xs tracking-widest uppercase mt-2 opacity-70">Hari</div></div>
+          <div class="cd-box py-5 px-2 text-center"><div id="cd-hours" class="font-playfair text-gold text-4xl md:text-5xl font-bold leading-none">00</div><div class="text-gold-light text-xs tracking-widest uppercase mt-2 opacity-70">Jam</div></div>
+          <div class="cd-box py-5 px-2 text-center"><div id="cd-mins"  class="font-playfair text-gold text-4xl md:text-5xl font-bold leading-none">00</div><div class="text-gold-light text-xs tracking-widest uppercase mt-2 opacity-70">Minit</div></div>
+          <div class="cd-box py-5 px-2 text-center"><div id="cd-secs"  class="font-playfair text-gold text-4xl md:text-5xl font-bold leading-none">00</div><div class="text-gold-light text-xs tracking-widest uppercase mt-2 opacity-70">Saat</div></div>
+        </div>
+        <p id="cd-done" class="text-gold font-cormorant italic text-xl mt-6 hidden">✦ Selamat Pengantin Baru ✦</p>
+      </div>
+    </section>
+
+    <!-- TENTATIVE -->
+    <section class="py-20 px-6" style="background:var(--color-tan);">
+      <div class="max-w-3xl mx-auto">
+        <div class="text-center mb-14 reveal">
+          <p class="text-gold text-xs tracking-widest uppercase mb-2" style="letter-spacing:.3em;">Jadual Acara</p>
+          <h2 class="font-playfair text-forest text-4xl md:text-5xl">Aturcara Majlis</h2>
+          <div class="orn-divider mt-4"><div class="w-2 h-2 rounded-full bg-gold"></div></div>
+        </div>
+        <div class="relative">
+          <div class="absolute left-6 top-0 bottom-0 w-px hidden md:block" style="background:linear-gradient(180deg,var(--color-gold),rgba(var(--color-gold-rgb),.1))"></div>
+          <div class="space-y-6">
+            {{SCHEDULE_HTML}}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAMILY -->
+    <section class="py-20 px-6" style="background:var(--color-cream);">
+      <div class="max-w-5xl mx-auto">
+        <div class="text-center mb-14 reveal">
+          <p class="text-gold text-xs tracking-widest uppercase mb-2" style="letter-spacing:.3em;">Yang Memohon Kehadiran</p>
+          <h2 class="font-playfair text-forest text-4xl md:text-5xl">Keluarga Pengantin</h2>
+          <div class="orn-divider mt-4"><div class="w-2 h-2 rounded-full bg-gold"></div></div>
+        </div>
+        <div class="grid md:grid-cols-2 gap-10">
+          <div class="reveal text-center">
+            <div class="inline-flex items-center justify-center w-14 h-14 rounded-full mb-5" style="background:linear-gradient(135deg,var(--color-forest),var(--color-forest-mid));">
+              <svg width="26" height="26" viewBox="0 0 26 26" fill="none"><circle cx="13" cy="8" r="5" fill="none" stroke="var(--color-gold)" stroke-width="1.4"/><path d="M3 23C3 18 7.5 14 13 14C18.5 14 23 18 23 23" fill="none" stroke="var(--color-gold)" stroke-width="1.4" stroke-linecap="round"/></svg>
+            </div>
+            <h3 class="font-playfair text-forest text-2xl mb-1">Pihak Pengantin Lelaki</h3>
+            <div class="h-px mb-6 mt-3 max-w-xs mx-auto" style="background:linear-gradient(90deg,transparent,var(--color-gold),transparent)"></div>
+            <div class="space-y-4">
+              <div class="p-4 border border-gold border-opacity-40 rounded-sm" style="background:rgba(var(--color-gold-rgb),.04);">
+                <p class="text-gold text-xs tracking-widest uppercase mb-1">Pengantin Lelaki</p>
+                <p class="font-playfair text-forest text-lg">{{GROOM_FULL}}</p>
+              </div>
+              <div class="p-4 border border-gold border-opacity-40 rounded-sm" style="background:rgba(var(--color-gold-rgb),.04);">
+                <p class="text-gold text-xs tracking-widest uppercase mb-1">Ayahanda {{GROOM_DAD_DECEASED_BADGE}}</p>
+                <p class="font-playfair text-forest text-lg">{{GROOM_DAD_PREFIX_BLOCK}}{{GROOM_DAD}}</p>
+              </div>
+              <div class="p-4 border border-gold border-opacity-40 rounded-sm" style="background:rgba(var(--color-gold-rgb),.04);">
+                <p class="text-gold text-xs tracking-widest uppercase mb-1">Bonda {{GROOM_MOM_DECEASED_BADGE}}</p>
+                <p class="font-playfair text-forest text-lg">{{GROOM_MOM_PREFIX_BLOCK}}{{GROOM_MOM}}</p>
+              </div>
+              {{GROOM_WALI_BLOCK}}
+            </div>
+          </div>
+          <div class="reveal text-center">
+            <div class="inline-flex items-center justify-center w-14 h-14 rounded-full mb-5" style="background:linear-gradient(135deg,var(--color-forest),var(--color-forest-mid));">
+              <svg width="26" height="26" viewBox="0 0 26 26" fill="none"><circle cx="13" cy="8" r="5" fill="none" stroke="var(--color-gold)" stroke-width="1.4"/><path d="M3 23C3 18 7.5 14 13 14C18.5 14 23 18 23 23" fill="none" stroke="var(--color-gold)" stroke-width="1.4" stroke-linecap="round"/></svg>
+            </div>
+            <h3 class="font-playfair text-forest text-2xl mb-1">Pihak Pengantin Perempuan</h3>
+            <div class="h-px mb-6 mt-3 max-w-xs mx-auto" style="background:linear-gradient(90deg,transparent,var(--color-gold),transparent)"></div>
+            <div class="space-y-4">
+              <div class="p-4 border border-gold border-opacity-40 rounded-sm" style="background:rgba(var(--color-gold-rgb),.04);">
+                <p class="text-gold text-xs tracking-widest uppercase mb-1">Pengantin Perempuan</p>
+                <p class="font-playfair text-forest text-lg">{{BRIDE_FULL}}</p>
+              </div>
+              <div class="p-4 border border-gold border-opacity-40 rounded-sm" style="background:rgba(var(--color-gold-rgb),.04);">
+                <p class="text-gold text-xs tracking-widest uppercase mb-1">Ayahanda {{BRIDE_DAD_DECEASED_BADGE}}</p>
+                <p class="font-playfair text-forest text-lg">{{BRIDE_DAD_PREFIX_BLOCK}}{{BRIDE_DAD}}</p>
+              </div>
+              <div class="p-4 border border-gold border-opacity-40 rounded-sm" style="background:rgba(var(--color-gold-rgb),.04);">
+                <p class="text-gold text-xs tracking-widest uppercase mb-1">Bonda {{BRIDE_MOM_DECEASED_BADGE}}</p>
+                <p class="font-playfair text-forest text-lg">{{BRIDE_MOM_PREFIX_BLOCK}}{{BRIDE_MOM}}</p>
+              </div>
+              {{BRIDE_WALI_BLOCK}}
+            </div>
+          </div>
+        </div>
+        <div class="text-center mt-10 reveal" style="display:{{ALFATIHAH_BLOCK_DISPLAY}};">
+          <div class="inline-block border border-gold border-opacity-50 rounded-sm px-6 py-3" style="background:rgba(var(--color-gold-rgb),.06);">
+            <p class="font-amiri text-forest text-lg">اَلْفَاتِحَة</p>
+            <p class="text-forest text-xs font-cormorant italic mt-1 opacity-70">{{ALFATIHAH_DUA}}</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- WISHES -->
+    <section class="py-20 px-6 forest-section" style="border-top:1px solid rgba(var(--color-gold-rgb),.25);border-bottom:1px solid rgba(var(--color-gold-rgb),.25);">
+      <div class="max-w-3xl mx-auto">
+        <div class="text-center mb-14 reveal">
+          <p class="text-gold text-xs tracking-widest uppercase mb-2" style="letter-spacing:.3em;">Doa &amp; Restu</p>
+          <h2 class="font-playfair text-white text-4xl md:text-5xl">Ucapan Tetamu</h2>
+          <div class="orn-divider mt-4"><div class="w-2 h-2 rounded-full bg-gold"></div></div>
+        </div>
+        <div class="wishes-list reveal" id="wishes-section-list">
+          {{WISHES_HTML}}
+        </div>
+      </div>
+    </section>
+
+    <!-- CONTACTS -->
+    <section class="py-20 px-6" style="background:var(--color-tan);">
+      <div class="max-w-3xl mx-auto">
+        <div class="text-center mb-14 reveal">
+          <p class="text-gold text-xs tracking-widest uppercase mb-2" style="letter-spacing:.3em;">Hubungi Kami</p>
+          <h2 class="font-playfair text-forest text-4xl md:text-5xl">Sebarang Pertanyaan</h2>
+          <div class="orn-divider mt-4"><div class="w-2 h-2 rounded-full bg-gold"></div></div>
+        </div>
+        <div class="space-y-4">
+          {{CONTACTS_HTML}}
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="pt-16 px-6 forest-section text-center" style="padding-bottom:calc(4rem + 80px + env(safe-area-inset-bottom));">
+      <div class="max-w-2xl mx-auto reveal">
+        <div class="float-anim mb-6"><svg width="50" height="50" viewBox="0 0 50 50" class="mx-auto opacity-70"><path d="M25 3L27.5 21.5 46 25 27.5 28.5 25 47 22.5 28.5 4 25 22.5 21.5Z" fill="none" stroke="var(--color-gold)" stroke-width="1.2"/></svg></div>
+        <p class="font-amiri text-white text-2xl mb-4">بَارَكَ اللهُ لَكُمَا وَبَارَكَ عَلَيْكُمَا وَجَمَعَ بَيْنَكُمَا فِي خَيْرٍ</p>
+        <div class="h-px mb-5" style="background:linear-gradient(90deg,transparent,var(--color-gold),transparent)"></div>
+        <p class="font-cormorant italic text-gold-light text-lg leading-relaxed mb-6">"Semoga Allah memberkati kalian berdua, dan mengumpulkan kalian dalam kebaikan."</p>
+        <p class="text-gold-light text-sm opacity-60 font-cormorant italic">Kehadiran Tuan / Puan adalah satu penghormatan yang amat kami sanjungi.</p>
+        <div class="mt-10 pt-6 border-t border-gold border-opacity-20">
+          <p class="text-gold text-xs opacity-40 tracking-widest">© 2026 {{GROOM_NAME}} &amp; {{BRIDE_NAME}}</p>
+        </div>
+      </div>
+    </footer>
+  </main>
+
+  <!-- Pre-Wedding Lightbox (grid mode) -->
+  <div class="pw-lightbox" id="pw-lightbox" onclick="pwCloseLightbox(event)">
+    <button class="pw-lightbox-close" onclick="pwCloseLightbox(event)">&times;</button>
+    <img id="pw-lightbox-img" src="" alt="Pre-Wedding">
+  </div>
+
+  <!-- ══ BOTTOM NAV ══ -->
+  <nav id="bottom-nav">
+    <div class="bn-inner">
+      <button onclick="openSheet('kenalan')">
+        <svg viewBox="0 0 26 26" fill="none"><circle cx="13" cy="8" r="5" stroke="var(--color-gold)" stroke-width="1.6"/><path d="M3 23c0-5 4.5-9 10-9s10 4 10 9" stroke="var(--color-gold)" stroke-width="1.6" stroke-linecap="round"/></svg>
+        Kenalan
+      </button>
+      <button onclick="openSheet('map')">
+        <svg viewBox="0 0 26 26" fill="none"><path d="M13 2C8.5 2 5 5.6 5 10c0 6 8 13 8 13s8-7 8-13c0-4.4-3.5-8-8-8Z" stroke="var(--color-gold)" stroke-width="1.6"/><circle cx="13" cy="10" r="2.6" stroke="var(--color-gold)" stroke-width="1.6"/></svg>
+        Lokasi
+      </button>
+      <button onclick="openSheet('gift')" id="nav-gift-btn" style="display:{{GIFT_NAV_DISPLAY}};">
+        <svg viewBox="0 0 26 26" fill="none"><rect x="4" y="11" width="18" height="11" rx="1" stroke="var(--color-gold)" stroke-width="1.6"/><path d="M4 11h18v4H4z" fill="none" stroke="var(--color-gold)" stroke-width="1.6"/><path d="M13 11v11M13 11C13 7 9 5 7.5 6.5S9 11 13 11Zm0 0c0-4 4-6 5.5-4.5S17 11 13 11Z" stroke="var(--color-gold)" stroke-width="1.4" stroke-linejoin="round"/></svg>
+        Hadiah
+      </button>
+      <button onclick="openSheet('kehadiran')">
+        <svg viewBox="0 0 26 26" fill="none"><path d="M5 13.5 10.5 19 21 7" stroke="var(--color-gold)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Kehadiran
+      </button>
+      <button onclick="openSheet('ucapan')">
+        <svg viewBox="0 0 26 26" fill="none"><path d="M3 5h20v13H10l-5 4v-4H3V5Z" stroke="var(--color-gold)" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        Ucapan
+      </button>
+    </div>
+  </nav>
+
+  <div class="sheet-overlay" id="sheet-overlay" onclick="closeSheet()"></div>
+
+  <!-- Sheet: Kenalan -->
+  <div class="bottom-sheet" id="sheet-kenalan">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header"><h3>Kenalan</h3><button class="sheet-close" onclick="closeSheet()">&times;</button></div>
+    <div class="sheet-body">
+      {{CONTACTS_HTML}}
+    </div>
+  </div>
+
+  <!-- Sheet: Map -->
+  <div class="bottom-sheet" id="sheet-map">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header"><h3>Lokasi Majlis</h3><button class="sheet-close" onclick="closeSheet()">&times;</button></div>
+    <div class="sheet-body">
+      <a href="{{MAP_GOOGLE_URL}}" target="_blank" rel="noopener" class="map-link-card">
+        <div class="map-link-icon"><img src="/assets/images/google_maps_logo.png" alt="Google Maps" style="width:24px;height:24px;object-fit:contain;"></div>
+        <div class="map-link-text"><p>Google Maps</p><p>Buka arah jalan di Google Maps</p></div>
+      </a>
+      <a href="{{MAP_WAZE_URL}}" target="_blank" rel="noopener" class="map-link-card">
+        <div class="map-link-icon"><img src="/assets/images/waze_logo.png" alt="Waze" style="width:24px;height:24px;object-fit:contain;"></div>
+        <div class="map-link-text"><p>Waze</p><p>Buka navigasi di Waze</p></div>
+      </a>
+    </div>
+  </div>
+
+  <!-- Sheet: Gift -->
+  <div class="bottom-sheet" id="sheet-gift">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header"><h3>Hadiah Pengantin</h3><button class="sheet-close" onclick="closeSheet()">&times;</button></div>
+    <div class="sheet-body">
+      <img src="{{GIFT_QR_URL}}" alt="QR DuitNow" class="gift-qr-img" onerror="this.style.display='none'">
+      <div class="bank-info-card">
+        <p class="bi-label">Bank</p>
+        <p class="bi-value">{{GIFT_BANK_NAME}}</p>
+      </div>
+      <div class="bank-info-card">
+        <p class="bi-label">No. Akaun <button class="copy-btn" onclick="copyText('{{GIFT_BANK_ACCOUNT}}',this)">Salin</button></p>
+        <p class="bi-value">{{GIFT_BANK_ACCOUNT}}</p>
+      </div>
+      <div class="bank-info-card">
+        <p class="bi-label">Nama Pemilik Akaun</p>
+        <p class="bi-value">{{GIFT_ACCOUNT_NAME}}</p>
+      </div>
+      <div class="h-px my-4" style="background:linear-gradient(90deg,transparent,var(--color-gold),transparent)"></div>
+      {{GIFT_PHYSICAL_BLOCK}}
+    </div>
+  </div>
+
+  <!-- Sheet: Kehadiran -->
+  <div class="bottom-sheet" id="sheet-kehadiran">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header"><h3>Pengesahan Kehadiran</h3><button class="sheet-close" onclick="closeSheet()">&times;</button></div>
+    <div class="sheet-body">
+      <form onsubmit="submitRsvp(event)">
+        <div class="sheet-field"><label>Nama Penuh</label><input type="text" name="name" required></div>
+        <div class="sheet-field"><label>No. Telefon</label><input type="tel" name="phone"></div>
+        <div class="sheet-field">
+          <label>Kehadiran</label>
+          <div class="sheet-radio-group" id="attendance-group">
+            <label><input type="radio" name="attendance" value="hadir" required onchange="onRadioChange(this)"> Datang</label>
+            <label><input type="radio" name="attendance" value="tidak_hadir" onchange="onRadioChange(this)"> Tidak Datang</label>
+          </div>
+        </div>
+        <div class="sheet-field"><label>Bilangan Hadir (termasuk diri sendiri)</label><input type="text" name="pax" value="1" inputmode="numeric"></div>
+        <button type="submit" class="sheet-submit-btn">Sahkan Kehadiran</button>
+        <div class="sheet-feedback" id="rsvp-feedback"></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Sheet: Ucapan -->
+  <div class="bottom-sheet" id="sheet-ucapan">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header"><h3>Ucapan &amp; Doa</h3><button class="sheet-close" onclick="closeSheet()">&times;</button></div>
+    <div class="sheet-body">
+      <form onsubmit="submitWish(event)">
+        <div class="sheet-field"><label>Nama Penuh</label><input type="text" name="name" required></div>
+        <div class="sheet-field"><label>Ucapan</label><textarea name="message" rows="4" required placeholder="Tulis ucapan dan doa anda di sini..."></textarea></div>
+        <button type="submit" class="sheet-submit-btn">Hantar Ucapan</button>
+        <div class="sheet-feedback" id="wish-feedback"></div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const START_TIME = Number('{{MUSIC_START_TIME}}') || 0;
+    const MUSIC_ENABLED = '{{MUSIC_ENABLED}}' !== 'false';
+    let musicPlaying = false;
+    let audio;
+    window.addEventListener('DOMContentLoaded', () => {
+      audio = document.getElementById('bg-audio');
+      audio.volume = 0.65;
+      audio.addEventListener('canplay', () => { if (audio.currentTime < START_TIME) audio.currentTime = START_TIME; }, { once: true });
+      audio.addEventListener('timeupdate', () => { if (audio.duration && audio.currentTime >= audio.duration - 0.5) audio.currentTime = START_TIME; });
+    });
+    function setMusicIcon(p) {
+      musicPlaying = p;
+      document.getElementById('icon-play').style.display  = p ? 'none'  : 'block';
+      document.getElementById('icon-pause').style.display = p ? 'block' : 'none';
+      document.getElementById('vinyl-ring').classList.toggle('paused', !p);
+    }
+    function toggleMusic() {
+      if (!audio) return;
+      if (musicPlaying) { audio.pause(); setMusicIcon(false); }
+      else { audio.play(); setMusicIcon(true); spawnNotes(); }
+    }
+    function spawnNotes() {
+      const notes = ['♪','♫','♩','♬'], btn = document.getElementById('music-btn');
+      if (!btn) return;
+      const rect = btn.getBoundingClientRect();
+      for (let i = 0; i < 4; i++) setTimeout(() => {
+        const n = document.createElement('div');
+        n.className = 'music-note';
+        n.textContent = notes[Math.floor(Math.random()*notes.length)];
+        n.style.left = (rect.left + Math.random()*44-8)+'px';
+        n.style.bottom = (window.innerHeight - rect.top + 4)+'px';
+        n.style.fontSize = (12+Math.random()*9)+'px';
+        document.body.appendChild(n);
+        setTimeout(() => n.remove(), 2600);
+      }, i*280);
+    }
+    function openInvitation() {
+      if (MUSIC_ENABLED && audio) {
+        audio.currentTime = START_TIME;
+        audio.play().then(() => { setMusicIcon(true); setTimeout(spawnNotes,500); }).catch(() => setMusicIcon(false));
+        document.getElementById('music-btn').style.display = 'flex';
+      }
+      document.getElementById('bottom-nav').style.display = 'block';
+      setupBottomNavGrid();
+      const opening = document.getElementById('opening'), main = document.getElementById('main');
+      opening.classList.add('dismiss');
+      setTimeout(() => { opening.style.display='none'; main.style.opacity='1'; spawnPetals(); initScrollReveal(); initCountdown(); }, 900);
+    }
+    function setupBottomNavGrid() {
+      const inner = document.querySelector('#bottom-nav .bn-inner');
+      const visibleCount = Array.from(inner.children).filter(b => b.style.display !== 'none').length;
+      inner.style.gridTemplateColumns = `repeat(${visibleCount}, 1fr)`;
+    }
+
+    // ── Bottom Sheets ──
+    const TEMPLATE_ID = '{{TEMPLATE_ID}}';
+    let activeSheet = null;
+    function openSheet(name) {
+      if (activeSheet) closeSheet();
+      const sheet = document.getElementById('sheet-' + name);
+      if (!sheet) return;
+      document.getElementById('sheet-overlay').classList.add('open');
+      sheet.classList.add('open');
+      activeSheet = name;
+    }
+    function closeSheet() {
+      if (!activeSheet) return;
+      document.getElementById('sheet-overlay').classList.remove('open');
+      document.getElementById('sheet-' + activeSheet).classList.remove('open');
+      activeSheet = null;
+    }
+    function onRadioChange(input) {
+      input.closest('.sheet-radio-group').querySelectorAll('label').forEach(l => l.classList.remove('checked'));
+      input.closest('label').classList.add('checked');
+    }
+    function copyText(text, btn) {
+      navigator.clipboard.writeText(text).then(() => {
+        const old = btn.textContent;
+        btn.textContent = 'Disalin!';
+        setTimeout(() => btn.textContent = old, 1500);
+      });
+    }
+    function showFeedback(elId, ok, msg) {
+      const el = document.getElementById(elId);
+      el.textContent = msg;
+      el.className = 'sheet-feedback ' + (ok ? 'ok' : 'err');
+    }
+    async function submitRsvp(e) {
+      e.preventDefault();
+      const form = e.target, btn = form.querySelector('button[type=submit]');
+      const data = Object.fromEntries(new FormData(form).entries());
+      data.templateId = TEMPLATE_ID;
+      btn.disabled = true;
+      try {
+        const res = await fetch('/api/rsvp', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data) });
+        const json = await res.json();
+        showFeedback('rsvp-feedback', res.ok, json.message || json.error);
+        if (res.ok) { form.reset(); setTimeout(closeSheet, 1200); }
+      } catch (err) {
+        showFeedback('rsvp-feedback', false, 'Ralat rangkaian. Sila cuba lagi.');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+    async function submitWish(e) {
+      e.preventDefault();
+      const form = e.target, btn = form.querySelector('button[type=submit]');
+      const data = Object.fromEntries(new FormData(form).entries());
+      data.templateId = TEMPLATE_ID;
+      btn.disabled = true;
+      try {
+        const res = await fetch('/api/wish', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data) });
+        const json = await res.json();
+        showFeedback('wish-feedback', res.ok, json.message || json.error);
+        if (res.ok) { form.reset(); refreshWishes(); setTimeout(closeSheet, 1200); }
+      } catch (err) {
+        showFeedback('wish-feedback', false, 'Ralat rangkaian. Sila cuba lagi.');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+    // ── Gift Item Reservation ──
+    let GIFT_ITEMS = {{GIFT_ITEMS_JSON}};
+    let reserveTargetId = null;
+    function openReserveForm(itemId, itemName) {
+      reserveTargetId = itemId;
+      const box = document.getElementById('reserve-form-box');
+      if (!box) return;
+      document.getElementById('reserve-item-name').textContent = itemName;
+      box.style.display = 'block';
+      box.querySelector('form').style.display = 'block';
+      box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    function closeReserveForm() {
+      reserveTargetId = null;
+      const box = document.getElementById('reserve-form-box');
+      if (box) box.style.display = 'none';
+    }
+    async function submitReserve(e) {
+      e.preventDefault();
+      if (!reserveTargetId) {
+        showFeedback('reserve-feedback', false, 'Ralat: barang ini belum disediakan untuk tempahan. Sila minta pihak pengantin kemas kini senarai hadiah di admin.');
+        return;
+      }
+      const form = e.target, btn = form.querySelector('button[type=submit]');
+      const data = Object.fromEntries(new FormData(form).entries());
+      btn.disabled = true;
+      try {
+        const res = await fetch(`/api/template/${TEMPLATE_ID}/gift-item/${reserveTargetId}/reserve`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data),
+        });
+        const json = await res.json();
+        showFeedback('reserve-feedback', res.ok, json.message || json.error);
+        if (res.ok) {
+          GIFT_ITEMS = json.items;
+          renderGiftItemsGrid();
+          form.style.display = 'none';
+        }
+      } catch (err) {
+        showFeedback('reserve-feedback', false, 'Ralat rangkaian. Sila cuba lagi.');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+    function renderGiftItemsGrid() {
+      const grid = document.getElementById('gift-items-grid');
+      if (!grid) return;
+      grid.innerHTML = GIFT_ITEMS.map(item => {
+        const reserved = !!item.RESERVED_BY;
+        return `<div class="gift-item-card${reserved ? ' reserved' : ''}" data-gift-id="${escHtml(item.ID)}">
+          <img src="${escHtml(item.IMAGE_URL)}" alt="${escHtml(item.NAME)}" class="gift-item-img" onerror="this.style.display='none'">
+          <div class="gift-item-info">
+            <p class="gift-item-name">${escHtml(item.NAME)}</p>
+            ${reserved
+              ? `<p class="gift-item-status reserved">✓ Sudah Ditempah</p>`
+              : `<button type="button" class="gift-item-reserve-btn" onclick="openReserveForm('${escHtml(item.ID)}','${escHtml(item.NAME)}')">Tempah Barang Ini</button>`}
+          </div>
+        </div>`;
+      }).join('');
+    }
+    async function refreshGiftItems() {
+      try {
+        const res = await fetch(`/api/template/${TEMPLATE_ID}/gift-items`);
+        if (!res.ok) return;
+        GIFT_ITEMS = await res.json();
+        renderGiftItemsGrid();
+      } catch (err) { /* ignore network errors during polling */ }
+    }
+    setInterval(refreshGiftItems, 8000);
+
+    // ── Pre-Wedding Gallery ──
+    const PREWEDDING_PHOTOS = {{PREWEDDING_PHOTOS_JSON}};
+    let pwIndex = 0;
+    function pwGoTo(i) {
+      const slides = document.querySelectorAll('.pw-slide');
+      const dots = document.querySelectorAll('.pw-dot');
+      if (!slides.length) return;
+      pwIndex = (i + slides.length) % slides.length;
+      slides.forEach((s, idx) => s.classList.toggle('active', idx === pwIndex));
+      dots.forEach((d, idx) => d.classList.toggle('active', idx === pwIndex));
+    }
+    function pwNext() { pwGoTo(pwIndex + 1); }
+    function pwPrev() { pwGoTo(pwIndex - 1); }
+    let pwAutoTimer;
+    function pwStartAuto() {
+      if (!document.getElementById('pw-slideshow')) return;
+      pwAutoTimer = setInterval(pwNext, 4500);
+    }
+    function pwOpenLightbox(i) {
+      const url = PREWEDDING_PHOTOS[i];
+      if (!url) return;
+      document.getElementById('pw-lightbox-img').src = url;
+      document.getElementById('pw-lightbox').classList.add('open');
+    }
+    function pwCloseLightbox(e) {
+      if (e.target.id === 'pw-lightbox' || e.target.classList.contains('pw-lightbox-close')) {
+        document.getElementById('pw-lightbox').classList.remove('open');
+      }
+    }
+    pwStartAuto();
+
+    // ── Live Wishes Refresh ──
+    function escHtml(str) {
+      return String(str ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+    function renderWishesList(wishes) {
+      const list = document.getElementById('wishes-section-list');
+      if (!list) return;
+      if (!wishes.length) {
+        list.innerHTML = '<p class="wish-empty">Belum ada ucapan. Jadilah yang pertama!</p>';
+        return;
+      }
+      list.innerHTML = wishes.map(w => `
+        <div class="wish-card">
+          <p class="wish-name">${escHtml(w.name)}</p>
+          <p class="wish-message">${escHtml(w.message)}</p>
+        </div>`).join('');
+    }
+    async function refreshWishes() {
+      try {
+        const res = await fetch(`/api/wishes/${TEMPLATE_ID}`);
+        if (!res.ok) return;
+        renderWishesList(await res.json());
+      } catch (err) { /* ignore network errors during polling */ }
+    }
+    setInterval(refreshWishes, 8000);
+    function spawnPetals() {
+      const c = document.getElementById('petals');
+      const svgs = [
+        `<svg width="14" height="18" viewBox="0 0 14 18"><ellipse cx="7" cy="10" rx="6" ry="8" fill="rgba(201,168,76,.55)" transform="rotate(-15 7 10)"/></svg>`,
+        `<svg width="12" height="16" viewBox="0 0 12 16"><ellipse cx="6" cy="9" rx="5" ry="7" fill="rgba(180,140,60,.45)" transform="rotate(20 6 9)"/></svg>`,
+        `<svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4" fill="rgba(201,168,76,.4)"/></svg>`
+      ];
+      for (let i=0;i<18;i++) {
+        const el=document.createElement('div'); el.classList.add('petal'); el.innerHTML=svgs[i%svgs.length];
+        el.style.cssText=`left:${Math.random()*100}%;animation-duration:${7+Math.random()*10}s;animation-delay:-${Math.random()*12}s;transform:scale(${0.6+Math.random()*1.2});opacity:${0.4+Math.random()*.5};`;
+        c.appendChild(el);
+      }
+    }
+    function initScrollReveal() {
+      const obs = new IntersectionObserver(entries => entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); }), {threshold:.12});
+      document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+    }
+    function initCountdown() {
+      const target = new Date('{{EVENT_DATE_ISO}}');
+      function pad(n){return String(n).padStart(2,'0');}
+      function tick(){
+        const diff = target - new Date();
+        if(diff<=0){['cd-days','cd-hours','cd-mins','cd-secs'].forEach(id=>document.getElementById(id).textContent='00');document.getElementById('cd-done').classList.remove('hidden');return;}
+        document.getElementById('cd-days').textContent =pad(Math.floor(diff/86400000));
+        document.getElementById('cd-hours').textContent=pad(Math.floor((diff%86400000)/3600000));
+        document.getElementById('cd-mins').textContent =pad(Math.floor((diff%3600000)/60000));
+        document.getElementById('cd-secs').textContent =pad(Math.floor((diff%60000)/1000));
+      }
+      tick(); setInterval(tick,1000);
+    }
+  </script>
+</body>
+</html>
