@@ -3,7 +3,7 @@ import path from 'path';
 import { db } from '../database/firebase';
 import { escapeHtml, deceasedPrefixBlock, deceasedBadge } from '../utils/html.util';
 import { renderThemeVars } from './theme.service';
-import { TemplateConfig } from './template.types';
+import { TemplateConfig, TEMPLATES_META, DEFAULT_DESIGN_ID } from './template.types';
 
 const FRONTEND_TEMPLATES_DIR = path.join(__dirname, '..', '..', 'frontend', 'templates');
 
@@ -16,6 +16,11 @@ export async function getConfig(): Promise<TemplateConfig> {
 
 export async function saveTemplate(tid: string, data: Record<string, unknown>): Promise<void> {
   await db.collection('templates').doc(tid).set(data, { merge: true });
+}
+
+export async function createWedding(data: Record<string, unknown>): Promise<string> {
+  const docRef = await db.collection('templates').add({ DESIGN_ID: DEFAULT_DESIGN_ID, ...data });
+  return docRef.id;
 }
 
 function renderScheduleHtml(schedule: any[]): string {
@@ -93,11 +98,19 @@ function renderContactsHtml(contacts: any[]): string {
           </a>`).join('\n');
 }
 
-export async function renderTemplate(tid: string, config: TemplateConfig): Promise<string> {
-  const html = fs.readFileSync(path.join(FRONTEND_TEMPLATES_DIR, tid, 'index.html'), 'utf8');
-  const data = { ...config[tid] };
+export async function renderTemplate(wid: string, config: TemplateConfig): Promise<string> {
+  const data = { ...config[wid] };
 
-  data.TEMPLATE_ID = tid;
+  // DESIGN_ID picks which visual layout (frontend/templates/{designId}/index.html) renders this wedding's data.
+  let designId = data.DESIGN_ID && TEMPLATES_META[data.DESIGN_ID] ? data.DESIGN_ID : DEFAULT_DESIGN_ID;
+  if (data.DESIGN_ID !== designId) {
+    data.DESIGN_ID = designId;
+    saveTemplate(wid, { DESIGN_ID: designId }).catch(() => {});
+  }
+
+  const html = fs.readFileSync(path.join(FRONTEND_TEMPLATES_DIR, designId, 'index.html'), 'utf8');
+
+  data.TEMPLATE_ID = wid;
   data.MUSIC_URL = data.MUSIC_URL || '/assets/music/videoplayback.m4a';
   data.MUSIC_START_TIME = data.MUSIC_START_TIME ?? 89;
   data.MUSIC_ENABLED = data.MUSIC_ENABLED === 'false' ? 'false' : 'true';
@@ -150,7 +163,7 @@ export async function renderTemplate(tid: string, config: TemplateConfig): Promi
       giftItemsNeedBackfill = true;
     }
   });
-  if (giftItemsNeedBackfill) saveTemplate(tid, { GIFT_ITEMS: giftItems }).catch(() => {});
+  if (giftItemsNeedBackfill) saveTemplate(wid, { GIFT_ITEMS: giftItems }).catch(() => {});
   data.GIFT_ITEMS_JSON = JSON.stringify(giftItems).replace(/</g, '\\u003c');
   data.GIFT_PHYSICAL_BLOCK = giftItems.length > 0
     ? `<p class="font-cormorant italic text-forest text-sm opacity-80 mb-3">Sekiranya ingin menghantar hadiah secara fizikal, berikut adalah antara pilihan barang yang kami idamkan. Tekan "Tempah Barang Ini" untuk menempah supaya tetamu lain tidak menghantar barang yang sama:</p>
@@ -181,7 +194,7 @@ export async function renderTemplate(tid: string, config: TemplateConfig): Promi
   data.MAP_WAZE_URL = mapAddress ? `https://waze.com/ul?q=${encodedAddress}&navigate=yes` : '';
 
   const wishesSnapshot = await db.collection('rsvps')
-    .where('templateId', '==', tid)
+    .where('templateId', '==', wid)
     .where('type', '==', 'wish')
     .get();
   const wishes = wishesSnapshot.docs.map(doc => doc.data())

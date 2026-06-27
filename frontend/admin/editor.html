@@ -102,6 +102,19 @@
       <p class="field-hint">Huruf kecil, nombor, dan tanda sengkang (-) sahaja. Biarkan kosong untuk guna URL lalai (/template_1).</p>
     </div>
 
+    <!-- Design Kad Jemputan -->
+    <div class="field-group">
+      <h3>Design Kad Jemputan</h3>
+      <div class="input-btn-row">
+        <div>
+          <label>Pilih Design</label>
+          <select id="design-select"></select>
+        </div>
+        <button type="button" class="btn-save" id="design-btn" onclick="saveDesign()">🎨 Tukar Design</button>
+      </div>
+      <p class="field-hint">Data (nama, jadual, keluarga, dll.) kekal sama walau design ditukar.</p>
+    </div>
+
     <!-- Tabs -->
     <div style="display:flex;border-bottom:1px solid rgba(201,168,76,.15);margin-bottom:28px;overflow-x:auto;gap:0;">
       <button class="tab-btn active" onclick="switchTab('pengantin',this)">👫 Pengantin</button>
@@ -649,6 +662,40 @@ Ampang Jaya, Selangor"></textarea>
     window.stripTelPrefix = stripTelPrefix;
     window.addTelPrefix = addTelPrefix;
 
+    // Design selector
+    let currentDesignId = 'template_1';
+    function applyDesignSelection() {
+      const select = document.getElementById('design-select');
+      if (select.options.length) select.value = currentDesignId;
+    }
+    fetch('/api/designs').then(r => r.json()).then(designs => {
+      document.getElementById('design-select').innerHTML = designs.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
+      applyDesignSelection();
+    }).catch(() => {
+      document.getElementById('design-select').innerHTML = '<option value="template_1">Klasik Emerald</option>';
+    });
+    async function saveDesign() {
+      const btn = document.getElementById('design-btn');
+      const designId = document.getElementById('design-select').value;
+      btn.disabled = true;
+      try {
+        const res = await fetch(`/api/template/${templateId}/design`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ designId }),
+        });
+        const json = await res.json();
+        if (json.success) {
+          currentDesignId = designId;
+          showToast('✅ ' + json.message);
+        } else showToast('❌ ' + json.error, true);
+      } catch (err) {
+        showToast('❌ Ralat menukar design: ' + err.message, true);
+      }
+      btn.disabled = false;
+    }
+    window.saveDesign = saveDesign;
+
     // Load existing data
     fetch(`/api/template/${templateId}`)
       .then(r => r.json())
@@ -693,6 +740,9 @@ Ampang Jaya, Selangor"></textarea>
           document.getElementById('preview-btn').href    = `/${data.SLUG}`;
           document.getElementById('footer-preview').href = `/${data.SLUG}`;
         }
+
+        currentDesignId = data.DESIGN_ID || 'template_1';
+        applyDesignSelection();
 
         document.getElementById('music-current').textContent = data.MUSIC_URL
           ? '🎵 Muzik semasa: ' + data.MUSIC_URL.split('/').pop()
@@ -978,7 +1028,7 @@ Ampang Jaya, Selangor"></textarea>
     // URL slug
     function updateSlugPreview() {
       const slug = document.getElementById('slug-input').value.trim().toLowerCase();
-      document.getElementById('slug-preview').textContent = 'localhost:3000/' + (slug || templateId);
+      document.getElementById('slug-preview').textContent = 'localhost:3000/' + (slug || `w/${templateId}`);
     }
     document.getElementById('slug-input').addEventListener('input', updateSlugPreview);
 

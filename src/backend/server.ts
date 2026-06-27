@@ -32,7 +32,8 @@ app.use(session({
 // Serve shared static assets (music, images, etc.)
 app.use('/assets', express.static(path.join(PUBLIC_DIR, 'assets')));
 
-// Serve static assets per template (audio, images, etc.) — but NOT index.html
+// Serve static assets per DESIGN (visual layout), not per wedding — multiple weddings
+// can share the same design folder's assets (audio, images, etc.), but NOT index.html.
 Object.keys(TEMPLATES_META).forEach(tid => {
   app.use(`/${tid}`, (req: Request, res: Response, next: NextFunction) => {
     if (req.path === '/' || req.path === '') return next(); // let our route handle it

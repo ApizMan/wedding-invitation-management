@@ -48,9 +48,30 @@
   <div style="flex:1;padding:32px 24px;max-width:1100px;margin:0 auto;width:100%;">
 
     <!-- Page title -->
-    <div class="fade-in" style="margin-bottom:32px;">
-      <h2 style="font-family:'Playfair Display',serif;font-size:1.8rem;color:#e8d5a3;margin-bottom:6px;">Senarai Template</h2>
-      <p style="color:rgba(232,213,163,.5);font-size:.9rem;">Pilih template untuk diedit atau pratonton.</p>
+    <div class="fade-in" style="margin-bottom:32px;display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+      <div>
+        <h2 style="font-family:'Playfair Display',serif;font-size:1.8rem;color:#e8d5a3;margin-bottom:6px;">Senarai Template</h2>
+        <p style="color:rgba(232,213,163,.5);font-size:.9rem;">Pilih template untuk diedit atau pratonton.</p>
+      </div>
+      <button onclick="openCreateModal()" style="background:linear-gradient(135deg,#c9a84c,#8b6914);border:none;border-radius:3px;padding:11px 22px;color:#1a3d2b;font-weight:700;font-size:.8rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;white-space:nowrap;">
+        ➕ Cipta Wedding Baru
+      </button>
+    </div>
+
+    <!-- Create Wedding Modal -->
+    <div id="create-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;align-items:center;justify-content:center;padding:20px;">
+      <div style="background:#16291f;border:1px solid rgba(201,168,76,.3);border-radius:6px;padding:28px;max-width:420px;width:100%;">
+        <h3 style="font-family:'Playfair Display',serif;color:#e8d5a3;font-size:1.2rem;margin-bottom:18px;">Cipta Wedding Baru</h3>
+        <label style="display:block;color:#c9a84c;font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;margin-bottom:6px;">Nama Wedding</label>
+        <input id="create-name" type="text" placeholder="Cth: Nafiz & Atiqah" style="width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(201,168,76,.25);border-radius:3px;padding:10px 12px;color:#fdf8f0;font-size:.9rem;margin-bottom:16px;">
+        <label style="display:block;color:#c9a84c;font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;margin-bottom:6px;">Design</label>
+        <select id="create-design" style="width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(201,168,76,.25);border-radius:3px;padding:10px 12px;color:#fdf8f0;font-size:.9rem;margin-bottom:22px;"></select>
+        <div style="display:flex;gap:10px;">
+          <button onclick="closeCreateModal()" style="flex:1;background:none;border:1px solid rgba(201,168,76,.3);border-radius:3px;padding:11px;color:rgba(232,213,163,.7);font-size:.8rem;cursor:pointer;">Batal</button>
+          <button id="create-submit-btn" onclick="submitCreateWedding()" style="flex:1;background:linear-gradient(135deg,#c9a84c,#8b6914);border:none;border-radius:3px;padding:11px;color:#1a3d2b;font-weight:700;font-size:.8rem;cursor:pointer;">Cipta</button>
+        </div>
+        <p id="create-error" style="color:#fca5a5;font-size:.78rem;margin-top:12px;display:none;"></p>
+      </div>
     </div>
 
     <!-- Stats row -->
@@ -115,7 +136,7 @@
                 <h3 style="font-family:'Playfair Display',serif;color:#e8d5a3;font-size:1.05rem;margin-bottom:4px;">${t.name}</h3>
                 <span style="font-size:.7rem;color:rgba(201,168,76,.7);background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.2);padding:2px 8px;border-radius:20px;">${t.theme}</span>
               </div>
-              <span style="font-size:.68rem;color:rgba(201,168,76,.5);background:rgba(201,168,76,.05);border:1px solid rgba(201,168,76,.15);padding:2px 8px;border-radius:20px;white-space:nowrap;">Template ${i+1}</span>
+              <span style="font-size:.68rem;color:rgba(201,168,76,.5);background:rgba(201,168,76,.05);border:1px solid rgba(201,168,76,.15);padding:2px 8px;border-radius:20px;white-space:nowrap;">${t.designName}</span>
             </div>
             <div style="display:flex;gap:10px;margin-top:16px;">
               <a href="/admin/template/${t.id}/edit" class="btn-edit" style="flex:1;padding:10px;border:none;border-radius:3px;color:#1a3d2b;font-weight:700;font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;text-decoration:none;text-align:center;transition:opacity .2s;">
@@ -135,6 +156,49 @@
     }).catch(() => {
       document.getElementById('template-grid').innerHTML = '<p style="color:rgba(232,213,163,.4);">Ralat memuatkan template.</p>';
     });
+
+    // ── Create Wedding Modal ──
+    function openCreateModal() {
+      document.getElementById('create-name').value = '';
+      document.getElementById('create-error').style.display = 'none';
+      const select = document.getElementById('create-design');
+      select.innerHTML = '<option>Memuatkan...</option>';
+      document.getElementById('create-modal').style.display = 'flex';
+      fetch('/api/designs').then(r => r.json()).then(designs => {
+        select.innerHTML = designs.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
+      }).catch(() => {
+        select.innerHTML = '<option value="template_1">Klasik Emerald</option>';
+      });
+    }
+    function closeCreateModal() {
+      document.getElementById('create-modal').style.display = 'none';
+    }
+    async function submitCreateWedding() {
+      const name = document.getElementById('create-name').value.trim();
+      const designId = document.getElementById('create-design').value;
+      const errEl = document.getElementById('create-error');
+      errEl.style.display = 'none';
+      if (!name) {
+        errEl.textContent = 'Sila isi nama wedding';
+        errEl.style.display = 'block';
+        return;
+      }
+      const btn = document.getElementById('create-submit-btn');
+      btn.disabled = true;
+      try {
+        const res = await fetch('/api/templates', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, designId }),
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || 'Ralat tidak diketahui');
+        window.location.href = `/admin/template/${json.id}/edit`;
+      } catch (err) {
+        errEl.textContent = err.message;
+        errEl.style.display = 'block';
+        btn.disabled = false;
+      }
+    }
   </script>
 </body>
 </html>

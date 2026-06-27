@@ -22,6 +22,18 @@ Object.keys(TEMPLATES_META).forEach(tid => {
   });
 });
 
+// Render any wedding directly by Firestore doc ID (e.g. for preview before a slug is set)
+publicRouter.get('/w/:weddingId', async (req: Request, res: Response) => {
+  try {
+    const weddingId = req.params.weddingId as string;
+    const config = await getConfig();
+    if (!config[weddingId]) return res.status(404).send('Wedding tidak dijumpai');
+    res.send(await renderTemplate(weddingId, config));
+  } catch (err: any) {
+    res.status(500).send('Ralat memuatkan template: ' + err.message);
+  }
+});
+
 // Render template by custom slug (e.g. /nafiz-atiqah)
 publicRouter.get('/:slug', async (req: Request, res: Response, next: NextFunction) => {
   const slug = req.params.slug as string;

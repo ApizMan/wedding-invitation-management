@@ -1,11 +1,11 @@
 import { Router, Request, Response } from 'express';
 import { db, bucket } from '../../database/firebase';
 import { requireAuth } from '../middleware/auth.middleware';
-import { getConfig, saveTemplate } from '../../services/template.service';
+import { getConfig, saveTemplate, createWedding } from '../../services/template.service';
 import { isValidSlug, findTemplateBySlug } from '../../services/slug.service';
 import { upload, compressAudio } from '../../services/audio.service';
 import { uploadImage, compressImage } from '../../services/upload.service';
-import { TEMPLATES_META } from '../../services/template.types';
+import { TEMPLATES_META, DEFAULT_DESIGN_ID } from '../../services/template.types';
 
 export const apiRouter = Router();
 
@@ -15,16 +15,54 @@ apiRouter.get('/api/me', requireAuth, (req: Request, res: Response) => {
 
 apiRouter.get('/api/templates', requireAuth, async (req: Request, res: Response) => {
   const config = await getConfig();
-  const list = Object.entries(TEMPLATES_META).map(([id, meta]) => ({
-    ...meta,
-    name:      config[id]?.name || meta.name,
-    groomName: config[id]?.GROOM_NAME || '',
-    brideName: config[id]?.BRIDE_NAME || '',
-    date:      config[id]?.EVENT_DATE_SHORT || '',
-    slug:      config[id]?.SLUG || '',
-    preview:   config[id]?.SLUG ? `/${config[id].SLUG}` : meta.preview,
-  }));
+  const list = Object.entries(config).map(([id, w]: [string, any]) => {
+    const designId = w.DESIGN_ID && TEMPLATES_META[w.DESIGN_ID] ? w.DESIGN_ID : DEFAULT_DESIGN_ID;
+    return {
+      id,
+      name: w.name || 'Tanpa Nama',
+      theme: TEMPLATES_META[designId]?.theme || '',
+      designId,
+      designName: TEMPLATES_META[designId]?.name || 'Design Tidak Sah',
+      groomName: w.GROOM_NAME || '',
+      brideName: w.BRIDE_NAME || '',
+      date: w.EVENT_DATE_SHORT || '',
+      slug: w.SLUG || '',
+      preview: w.SLUG ? `/${w.SLUG}` : `/w/${id}`,
+    };
+  });
   res.json(list);
+});
+
+apiRouter.get('/api/designs', requireAuth, (req: Request, res: Response) => {
+  res.json(Object.values(TEMPLATES_META));
+});
+
+apiRouter.post('/api/templates', requireAuth, async (req: Request, res: Response) => {
+  try {
+    const { name, designId } = req.body;
+    if (!name || !String(name).trim()) {
+      return res.status(400).json({ error: 'Sila isi nama wedding' });
+    }
+    const finalDesignId = designId && TEMPLATES_META[designId] ? designId : DEFAULT_DESIGN_ID;
+    const id = await createWedding({ name: String(name).trim(), DESIGN_ID: finalDesignId });
+    res.json({ success: true, id, message: 'Wedding baru berjaya dicipta!' });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+apiRouter.post('/api/template/:id/design', requireAuth, async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id as string;
+    const { designId } = req.body;
+    const config = await getConfig();
+    if (!config[id]) return res.status(404).json({ error: 'Wedding tidak dijumpai' });
+    if (!designId || !TEMPLATES_META[designId]) return res.status(400).json({ error: 'Design tidak sah' });
+    await saveTemplate(id, { DESIGN_ID: designId });
+    res.json({ success: true, message: 'Design dikemas kini!' });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 apiRouter.post('/api/template/:id/rename', requireAuth, async (req: Request, res: Response) => {
