@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Dashboard — RSVP Admin</title>
+  <script src="/shared-assets/auth-client.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
   <style>
@@ -37,7 +38,7 @@
     </div>
     <div style="display:flex;align-items:center;gap:16px;">
       <div id="user-name" style="color:#c9a84c;font-size:.85rem;opacity:.8;"></div>
-      <a href="/admin/logout" style="display:flex;align-items:center;gap:6px;color:rgba(232,213,163,.5);font-size:.8rem;text-decoration:none;border:1px solid rgba(201,168,76,.2);padding:6px 12px;border-radius:3px;transition:all .2s;" onmouseover="this.style.color='#c9a84c';this.style.borderColor='rgba(201,168,76,.5)'" onmouseout="this.style.color='rgba(232,213,163,.5)';this.style.borderColor='rgba(201,168,76,.2)'">
+      <a href="#" onclick="KJAuth.logout('/admin/login'); return false;" style="display:flex;align-items:center;gap:6px;color:rgba(232,213,163,.5);font-size:.8rem;text-decoration:none;border:1px solid rgba(201,168,76,.2);padding:6px 12px;border-radius:3px;transition:all .2s;" onmouseover="this.style.color='#c9a84c';this.style.borderColor='rgba(201,168,76,.5)'" onmouseout="this.style.color='rgba(232,213,163,.5)';this.style.borderColor='rgba(201,168,76,.2)'">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 2H2v10h3M9 4l3 3-3 3M12 7H6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
         Log Keluar
       </a>
@@ -48,29 +49,39 @@
   <div style="flex:1;padding:32px 24px;max-width:1100px;margin:0 auto;width:100%;">
 
     <!-- Page title -->
-    <div class="fade-in" style="margin-bottom:32px;display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;">
-      <div>
-        <h2 style="font-family:'Playfair Display',serif;font-size:1.8rem;color:#e8d5a3;margin-bottom:6px;">Senarai Template</h2>
-        <p style="color:rgba(232,213,163,.5);font-size:.9rem;">Pilih template untuk diedit atau pratonton.</p>
-      </div>
-      <button onclick="openCreateModal()" style="background:linear-gradient(135deg,#c9a84c,#8b6914);border:none;border-radius:3px;padding:11px 22px;color:#1a3d2b;font-weight:700;font-size:.8rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;white-space:nowrap;">
-        ➕ Cipta Wedding Baru
-      </button>
+    <div class="fade-in" style="margin-bottom:32px;">
+      <h2 style="font-family:'Playfair Display',serif;font-size:1.8rem;color:#e8d5a3;margin-bottom:6px;">Senarai Template</h2>
+      <p style="color:rgba(232,213,163,.5);font-size:.9rem;">Pilih template untuk diedit atau pratonton.</p>
     </div>
 
-    <!-- Create Wedding Modal -->
-    <div id="create-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;align-items:center;justify-content:center;padding:20px;">
-      <div style="background:#16291f;border:1px solid rgba(201,168,76,.3);border-radius:6px;padding:28px;max-width:420px;width:100%;">
-        <h3 style="font-family:'Playfair Display',serif;color:#e8d5a3;font-size:1.2rem;margin-bottom:18px;">Cipta Wedding Baru</h3>
-        <label style="display:block;color:#c9a84c;font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;margin-bottom:6px;">Nama Wedding</label>
-        <input id="create-name" type="text" placeholder="Cth: Nafiz & Atiqah" style="width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(201,168,76,.25);border-radius:3px;padding:10px 12px;color:#fdf8f0;font-size:.9rem;margin-bottom:16px;">
-        <label style="display:block;color:#c9a84c;font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;margin-bottom:6px;">Design</label>
-        <select id="create-design" style="width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(201,168,76,.25);border-radius:3px;padding:10px 12px;color:#fdf8f0;font-size:.9rem;margin-bottom:22px;"></select>
-        <div style="display:flex;gap:10px;">
-          <button onclick="closeCreateModal()" style="flex:1;background:none;border:1px solid rgba(201,168,76,.3);border-radius:3px;padding:11px;color:rgba(232,213,163,.7);font-size:.8rem;cursor:pointer;">Batal</button>
-          <button id="create-submit-btn" onclick="submitCreateWedding()" style="flex:1;background:linear-gradient(135deg,#c9a84c,#8b6914);border:none;border-radius:3px;padding:11px;color:#1a3d2b;font-weight:700;font-size:.8rem;cursor:pointer;">Cipta</button>
+    <!-- Receipt Viewer Modal -->
+    <div id="receipt-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:110;align-items:center;justify-content:center;padding:24px;" onclick="closeReceiptModal()">
+      <img id="receipt-modal-img" src="" alt="Resit Pembayaran" style="max-width:90vw;max-height:85vh;border-radius:6px;border:1px solid rgba(201,168,76,.4);">
+    </div>
+
+    <!-- Sales Stats -->
+    <div class="fade-in" style="margin-bottom:36px;">
+      <h2 style="font-family:'Playfair Display',serif;font-size:1.3rem;color:#e8d5a3;margin-bottom:14px;">📊 Statistik Jualan</h2>
+      <div class="stats-row" style="grid-template-columns:repeat(4,1fr);margin-bottom:16px;">
+        <div style="background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.2);border-radius:6px;padding:20px 24px;">
+          <p style="color:rgba(201,168,76,.6);font-size:.72rem;text-transform:uppercase;letter-spacing:.2em;margin-bottom:6px;">Jumlah Hasil</p>
+          <p id="stat-revenue" style="font-family:'Playfair Display',serif;font-size:2rem;color:#c9a84c;">—</p>
         </div>
-        <p id="create-error" style="color:#fca5a5;font-size:.78rem;margin-top:12px;display:none;"></p>
+        <div style="background:rgba(76,175,80,.07);border:1px solid rgba(76,175,80,.25);border-radius:6px;padding:20px 24px;">
+          <p style="color:rgba(143,217,154,.7);font-size:.72rem;text-transform:uppercase;letter-spacing:.2em;margin-bottom:6px;">Pembelian Aktif</p>
+          <p id="stat-active" style="font-family:'Playfair Display',serif;font-size:2rem;color:#8fd99a;">—</p>
+        </div>
+        <div style="background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.2);border-radius:6px;padding:20px 24px;">
+          <p style="color:rgba(201,168,76,.6);font-size:.72rem;text-transform:uppercase;letter-spacing:.2em;margin-bottom:6px;">Menunggu Pengesahan</p>
+          <p id="stat-pendingcount" style="font-family:'Playfair Display',serif;font-size:2rem;color:#e8d5a3;">—</p>
+        </div>
+        <div style="background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.2);border-radius:6px;padding:20px 24px;">
+          <p style="color:rgba(201,168,76,.6);font-size:.72rem;text-transform:uppercase;letter-spacing:.2em;margin-bottom:6px;">Jumlah Pembelian</p>
+          <p id="stat-totalpurchases" style="font-family:'Playfair Display',serif;font-size:2rem;color:#c9a84c;">—</p>
+        </div>
+      </div>
+      <div id="stat-by-package" style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
+        <p style="color:rgba(232,213,163,.4);font-size:.85rem;">Memuatkan...</p>
       </div>
     </div>
 
@@ -90,7 +101,24 @@
       </div>
     </div>
 
+    <!-- Pending Purchases -->
+    <div class="fade-in" style="margin-bottom:36px;">
+      <h2 style="font-family:'Playfair Display',serif;font-size:1.3rem;color:#e8d5a3;margin-bottom:14px;">⏳ Pembelian Menunggu Pengesahan</h2>
+      <div id="pending-list" style="display:grid;gap:12px;">
+        <p style="color:rgba(232,213,163,.4);font-size:.85rem;">Memuatkan...</p>
+      </div>
+    </div>
+
+    <!-- Customers & Purchases -->
+    <div class="fade-in" style="margin-bottom:36px;">
+      <h2 style="font-family:'Playfair Display',serif;font-size:1.3rem;color:#e8d5a3;margin-bottom:14px;">👥 Pelanggan &amp; Pembelian</h2>
+      <div id="customer-list" style="display:grid;gap:12px;">
+        <p style="color:rgba(232,213,163,.4);font-size:.85rem;">Memuatkan...</p>
+      </div>
+    </div>
+
     <!-- Template cards -->
+    <h2 class="fade-in" style="font-family:'Playfair Display',serif;font-size:1.3rem;color:#e8d5a3;margin-bottom:14px;">📋 Semua Kad (Admin &amp; Demo)</h2>
     <div id="template-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:24px;">
       <!-- Loading skeleton -->
       <div class="skeleton" style="height:260px;border-radius:6px;"></div>
@@ -99,13 +127,147 @@
   </div>
 
   <script>
+    if (!KJAuth.getStoredToken()) { location.href = '/admin/login'; }
+
     // Load user
-    fetch('/api/me').then(r=>r.json()).then(u => {
+    KJAuth.authFetch('/api/me').then(r=>r.json()).then(u => {
       document.getElementById('user-name').textContent = 'Selamat datang, ' + u.name;
     });
 
+    // Load sales stats
+    const PACKAGE_LABELS = { bronze: '🥉 Bronze', platinum: '🥈 Platinum', gold: '🥇 Gold' };
+    function loadSalesStats() {
+      KJAuth.authFetch('/api/admin/sales-stats').then(r => r.json()).then(stats => {
+        document.getElementById('stat-revenue').textContent = 'RM' + stats.totalRevenue;
+        document.getElementById('stat-active').textContent = stats.totalActive;
+        document.getElementById('stat-pendingcount').textContent = stats.totalPending;
+        document.getElementById('stat-totalpurchases').textContent = stats.totalPurchases;
+
+        document.getElementById('stat-by-package').innerHTML = Object.entries(stats.byPackage).map(([pkg, data]) => `
+          <div style="background:rgba(201,168,76,.05);border:1px solid rgba(201,168,76,.2);border-radius:6px;padding:18px 20px;">
+            <p style="color:#e8d5a3;font-size:.95rem;font-weight:600;margin-bottom:8px;">${PACKAGE_LABELS[pkg] || pkg}</p>
+            <p style="color:rgba(201,168,76,.6);font-size:.78rem;">RM${stats.prices[pkg]} / kad</p>
+            <div style="display:flex;justify-content:space-between;margin-top:10px;">
+              <span style="color:rgba(232,213,163,.6);font-size:.8rem;">${data.count} terjual</span>
+              <span style="color:#c9a84c;font-weight:700;font-size:.9rem;">RM${data.revenue}</span>
+            </div>
+          </div>`).join('');
+      }).catch(() => {
+        document.getElementById('stat-by-package').innerHTML = '<p style="color:#fca5a5;font-size:.85rem;">Ralat memuatkan statistik.</p>';
+      });
+    }
+    loadSalesStats();
+
+    // Load pending purchases
+    function loadPendingPurchases() {
+      KJAuth.authFetch('/api/admin/pending-purchases').then(r => r.json()).then(list => {
+        const el = document.getElementById('pending-list');
+        if (!list.length) {
+          el.innerHTML = '<p style="color:rgba(232,213,163,.4);font-size:.85rem;">Tiada pembelian menunggu pengesahan.</p>';
+          return;
+        }
+        el.innerHTML = list.map(p => `
+          <div style="background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.25);border-radius:6px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+            <div style="display:flex;align-items:center;gap:14px;">
+              ${p.receiptUrl
+                ? `<img src="${p.receiptUrl}" alt="Resit" onclick="openReceiptModal('${p.receiptUrl}')" style="width:56px;height:56px;object-fit:cover;border-radius:4px;border:1px solid rgba(201,168,76,.4);cursor:pointer;flex-shrink:0;">`
+                : `<div style="width:56px;height:56px;border-radius:4px;border:1px dashed rgba(201,168,76,.3);display:flex;align-items:center;justify-content:center;font-size:.65rem;color:rgba(201,168,76,.4);flex-shrink:0;text-align:center;">Tiada Resit</div>`}
+              <div>
+                <p style="color:#e8d5a3;font-size:.95rem;font-weight:600;">${p.name}${p.groomName ? ' — ' + p.groomName + ' &amp; ' + p.brideName : ''}</p>
+                <p style="color:rgba(201,168,76,.6);font-size:.75rem;margin-top:2px;">Pakej: ${p.package.toUpperCase()} · UID: ${p.ownerUid.slice(0,10)}…</p>
+              </div>
+            </div>
+            <button onclick="approvePurchase('${p.id}', this)" style="background:linear-gradient(135deg,#c9a84c,#8b6914);border:none;border-radius:3px;padding:9px 18px;color:#1a3d2b;font-weight:700;font-size:.78rem;cursor:pointer;">✓ Sahkan Bayaran</button>
+          </div>`).join('');
+      }).catch(() => {
+        document.getElementById('pending-list').innerHTML = '<p style="color:#fca5a5;font-size:.85rem;">Ralat memuatkan senarai.</p>';
+      });
+    }
+    loadPendingPurchases();
+
+    function openReceiptModal(url) {
+      document.getElementById('receipt-modal-img').src = url;
+      document.getElementById('receipt-modal').style.display = 'flex';
+    }
+    function closeReceiptModal() {
+      document.getElementById('receipt-modal').style.display = 'none';
+    }
+    window.openReceiptModal = openReceiptModal;
+    window.closeReceiptModal = closeReceiptModal;
+
+    async function approvePurchase(id, btn) {
+      btn.disabled = true;
+      btn.textContent = 'Mengesahkan...';
+      try {
+        const res = await KJAuth.authFetch(`/api/template/${id}/approve`, { method: 'POST' });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || 'Ralat');
+        loadPendingPurchases();
+        loadCustomers();
+        loadSalesStats();
+      } catch (err) {
+        alert(err.message);
+        btn.disabled = false;
+        btn.textContent = '✓ Sahkan Bayaran';
+      }
+    }
+    window.approvePurchase = approvePurchase;
+
+    // Load customers + their purchases
+    const PACKAGE_COLORS = { bronze: '#a0764a', platinum: '#b9c4cc', gold: '#c9a84c' };
+    function loadCustomers() {
+      KJAuth.authFetch('/api/admin/customers').then(r => r.json()).then(customers => {
+        const el = document.getElementById('customer-list');
+        if (!customers.length) {
+          el.innerHTML = '<p style="color:rgba(232,213,163,.4);font-size:.85rem;">Tiada pelanggan berdaftar lagi.</p>';
+          return;
+        }
+        el.innerHTML = customers.map(c => {
+          const weddingsHtml = c.weddings.length
+            ? c.weddings.map(w => {
+                const statusLabel = w.purchaseStatus === 'active' ? 'Aktif' : 'Menunggu Pengesahan';
+                const statusColor = w.purchaseStatus === 'active' ? '#8fd99a' : '#e8d5a3';
+                const pkgColor = PACKAGE_COLORS[w.package] || '#c9a84c';
+                return `
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid rgba(201,168,76,.12);flex-wrap:wrap;">
+                    <div style="display:flex;align-items:center;gap:12px;">
+                      ${w.receiptUrl
+                        ? `<img src="${w.receiptUrl}" alt="Resit" onclick="openReceiptModal('${w.receiptUrl}')" style="width:38px;height:38px;object-fit:cover;border-radius:4px;border:1px solid rgba(201,168,76,.35);cursor:pointer;flex-shrink:0;">`
+                        : ''}
+                      <div>
+                        <p style="color:#fdf8f0;font-size:.85rem;">${w.groomName || w.brideName ? (w.groomName + ' &amp; ' + w.brideName) : w.name}</p>
+                        <p style="font-size:.72rem;margin-top:2px;">
+                          <span style="color:${pkgColor};font-weight:700;">${w.package.toUpperCase()}</span>
+                          <span style="color:rgba(201,168,76,.4);"> · </span>
+                          <span style="color:${statusColor};">${statusLabel}</span>
+                        </p>
+                      </div>
+                    </div>
+                    <div style="display:flex;gap:8px;">
+                      <a href="/admin/template/${w.id}/edit" style="font-size:.72rem;color:#c9a84c;border:1px solid rgba(201,168,76,.35);padding:5px 12px;border-radius:3px;text-decoration:none;">Edit</a>
+                      <a href="${w.preview}" target="_blank" style="font-size:.72rem;color:rgba(201,168,76,.7);border:1px solid rgba(201,168,76,.2);padding:5px 12px;border-radius:3px;text-decoration:none;">Lihat</a>
+                    </div>
+                  </div>`;
+              }).join('')
+            : '<p style="color:rgba(232,213,163,.35);font-size:.78rem;padding-top:8px;">Belum membeli sebarang kad.</p>';
+
+          return `
+            <div style="background:rgba(201,168,76,.05);border:1px solid rgba(201,168,76,.2);border-radius:6px;padding:18px 20px;">
+              <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+                <p style="color:#e8d5a3;font-size:.95rem;font-weight:600;">${c.name || c.email}</p>
+                <span style="color:rgba(201,168,76,.5);font-size:.72rem;">${c.email}</span>
+              </div>
+              <div style="margin-top:4px;">${weddingsHtml}</div>
+            </div>`;
+        }).join('');
+      }).catch(() => {
+        document.getElementById('customer-list').innerHTML = '<p style="color:#fca5a5;font-size:.85rem;">Ralat memuatkan senarai pelanggan.</p>';
+      });
+    }
+    loadCustomers();
+
     // Load templates
-    fetch('/api/templates').then(r=>r.json()).then(list => {
+    KJAuth.authFetch('/api/templates').then(r=>r.json()).then(list => {
       document.getElementById('stat-total').textContent = list.length;
       if (list[0]) {
         document.getElementById('stat-groom').textContent = list[0].groomName || '—';
@@ -157,48 +319,6 @@
       document.getElementById('template-grid').innerHTML = '<p style="color:rgba(232,213,163,.4);">Ralat memuatkan template.</p>';
     });
 
-    // ── Create Wedding Modal ──
-    function openCreateModal() {
-      document.getElementById('create-name').value = '';
-      document.getElementById('create-error').style.display = 'none';
-      const select = document.getElementById('create-design');
-      select.innerHTML = '<option>Memuatkan...</option>';
-      document.getElementById('create-modal').style.display = 'flex';
-      fetch('/api/designs').then(r => r.json()).then(designs => {
-        select.innerHTML = designs.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
-      }).catch(() => {
-        select.innerHTML = '<option value="template_1">Klasik Emerald</option>';
-      });
-    }
-    function closeCreateModal() {
-      document.getElementById('create-modal').style.display = 'none';
-    }
-    async function submitCreateWedding() {
-      const name = document.getElementById('create-name').value.trim();
-      const designId = document.getElementById('create-design').value;
-      const errEl = document.getElementById('create-error');
-      errEl.style.display = 'none';
-      if (!name) {
-        errEl.textContent = 'Sila isi nama wedding';
-        errEl.style.display = 'block';
-        return;
-      }
-      const btn = document.getElementById('create-submit-btn');
-      btn.disabled = true;
-      try {
-        const res = await fetch('/api/templates', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, designId }),
-        });
-        const json = await res.json();
-        if (!res.ok) throw new Error(json.error || 'Ralat tidak diketahui');
-        window.location.href = `/admin/template/${json.id}/edit`;
-      } catch (err) {
-        errEl.textContent = err.message;
-        errEl.style.display = 'block';
-        btn.disabled = false;
-      }
-    }
   </script>
 </body>
 </html>

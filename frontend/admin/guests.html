@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Senarai Tetamu — RSVP Admin</title>
+  <script src="/shared-assets/auth-client.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
   <style>
@@ -41,7 +42,7 @@
       <span style="color:rgba(201,168,76,.2);">/</span>
       <span style="font-family:'Playfair Display',serif;color:#e8d5a3;font-size:1rem;">Senarai Tetamu</span>
     </div>
-    <a href="/admin/logout" style="color:rgba(232,213,163,.4);font-size:.78rem;text-decoration:none;padding:7px 12px;border-radius:3px;border:1px solid rgba(201,168,76,.15);">Log Keluar</a>
+    <a href="#" onclick="KJAuth.logout('/admin/login'); return false;" style="color:rgba(232,213,163,.4);font-size:.78rem;text-decoration:none;padding:7px 12px;border-radius:3px;border:1px solid rgba(201,168,76,.15);">Log Keluar</a>
   </header>
 
   <!-- Body -->
@@ -98,6 +99,8 @@
   </div>
 
   <script>
+    if (!KJAuth.getStoredToken()) { location.href = '/admin/login'; }
+
     const templateId = location.pathname.split('/')[3]; // /admin/template/{id}/guests
     document.getElementById('editor-link').href = `/admin/template/${templateId}/edit`;
 
@@ -112,7 +115,7 @@
 
     async function loadGuests() {
       try {
-        const res = await fetch(`/api/template/${templateId}/rsvps`);
+        const res = await KJAuth.authFetch(`/api/template/${templateId}/rsvps`);
         const entries = await res.json();
         const attendance = entries.filter(e => e.type === 'attendance');
         const wishes = entries.filter(e => e.type === 'wish');

@@ -1,13 +1,37 @@
+import path from 'path';
 import { Router, Request, Response, NextFunction } from 'express';
 import { db } from '../../database/firebase';
 import { getConfig, renderTemplate } from '../../services/template.service';
 import { RESERVED_SLUGS, findTemplateBySlug } from '../../services/slug.service';
 import { TEMPLATES_META } from '../../services/template.types';
+import { hasFeature, resolvePackage } from '../../services/package.service';
+
+const FRONTEND_MARKETING_DIR = path.join(__dirname, '..', '..', '..', 'frontend', 'marketing');
 
 export const publicRouter = Router();
 
 publicRouter.get('/', (req: Request, res: Response) => {
-  res.redirect('/template_1');
+  res.sendFile(path.join(FRONTEND_MARKETING_DIR, 'landing.html'));
+});
+
+publicRouter.get('/catalog', (req: Request, res: Response) => {
+  res.sendFile(path.join(FRONTEND_MARKETING_DIR, 'catalog.html'));
+});
+
+publicRouter.get('/package', (req: Request, res: Response) => {
+  res.sendFile(path.join(FRONTEND_MARKETING_DIR, 'package.html'));
+});
+
+publicRouter.get('/faq', (req: Request, res: Response) => {
+  res.sendFile(path.join(FRONTEND_MARKETING_DIR, 'faq.html'));
+});
+
+publicRouter.get('/contact', (req: Request, res: Response) => {
+  res.sendFile(path.join(FRONTEND_MARKETING_DIR, 'contact.html'));
+});
+
+publicRouter.get('/profile', (req: Request, res: Response) => {
+  res.sendFile(path.join(FRONTEND_MARKETING_DIR, 'profile.html'));
 });
 
 // Render each fixed template dynamically
@@ -54,6 +78,12 @@ publicRouter.post('/api/rsvp', async (req: Request, res: Response) => {
     const { templateId, name, phone, attendance, pax } = req.body;
     if (!templateId || !name || !attendance) {
       return res.status(400).json({ error: 'Maklumat tidak lengkap' });
+    }
+    const snap = await db.collection('templates').doc(templateId).get();
+    if (!snap.exists) return res.status(404).json({ error: 'Template tidak dijumpai' });
+    const pkg = resolvePackage(snap.data()?.PACKAGE);
+    if (!hasFeature(pkg, 'RSVP')) {
+      return res.status(403).json({ error: 'Kad ini tidak menyokong RSVP & Kehadiran.' });
     }
     await db.collection('rsvps').add({
       type: 'attendance',
@@ -138,6 +168,12 @@ publicRouter.post('/api/wish', async (req: Request, res: Response) => {
     const { templateId, name, message } = req.body;
     if (!templateId || !name || !message) {
       return res.status(400).json({ error: 'Maklumat tidak lengkap' });
+    }
+    const snap = await db.collection('templates').doc(templateId).get();
+    if (!snap.exists) return res.status(404).json({ error: 'Template tidak dijumpai' });
+    const pkg = resolvePackage(snap.data()?.PACKAGE);
+    if (!hasFeature(pkg, 'WISHES')) {
+      return res.status(403).json({ error: 'Kad ini tidak menyokong Ucapan & Doa.' });
     }
     await db.collection('rsvps').add({
       type: 'wish',

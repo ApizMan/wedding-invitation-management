@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Editor Template — RSVP Admin</title>
+  <script src="/shared-assets/auth-client.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
   <style>
@@ -69,7 +70,7 @@
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7C1 7 3.5 2 7 2C10.5 2 13 7 13 7C13 7 10.5 12 7 12C3.5 12 1 7 1 7Z" stroke="currentColor" stroke-width="1.3"/><circle cx="7" cy="7" r="2" stroke="currentColor" stroke-width="1.3"/></svg>
         Pratonton
       </a>
-      <a href="/admin/logout" style="color:rgba(232,213,163,.4);font-size:.78rem;text-decoration:none;padding:7px 12px;border-radius:3px;border:1px solid rgba(201,168,76,.15);transition:all .2s;" onmouseover="this.style.color='#c9a84c'" onmouseout="this.style.color='rgba(232,213,163,.4)'">Log Keluar</a>
+      <a href="#" onclick="KJAuth.logout('/admin/login'); return false;" style="color:rgba(232,213,163,.4);font-size:.78rem;text-decoration:none;padding:7px 12px;border-radius:3px;border:1px solid rgba(201,168,76,.15);transition:all .2s;" onmouseover="this.style.color='#c9a84c'" onmouseout="this.style.color='rgba(232,213,163,.4)'">Log Keluar</a>
     </div>
   </header>
 
@@ -550,6 +551,8 @@ Ampang Jaya, Selangor"></textarea>
   <div class="toast" id="toast"></div>
 
   <script>
+    if (!KJAuth.getStoredToken()) { location.href = '/admin/login'; }
+
     const templateId = location.pathname.split('/')[3]; // /admin/template/{id}/edit
     document.getElementById('guests-btn').href = `/admin/template/${templateId}/guests`;
     let aturcaraData = [];
@@ -668,7 +671,7 @@ Ampang Jaya, Selangor"></textarea>
       const select = document.getElementById('design-select');
       if (select.options.length) select.value = currentDesignId;
     }
-    fetch('/api/designs').then(r => r.json()).then(designs => {
+    KJAuth.authFetch('/api/designs').then(r => r.json()).then(designs => {
       document.getElementById('design-select').innerHTML = designs.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
       applyDesignSelection();
     }).catch(() => {
@@ -679,7 +682,7 @@ Ampang Jaya, Selangor"></textarea>
       const designId = document.getElementById('design-select').value;
       btn.disabled = true;
       try {
-        const res = await fetch(`/api/template/${templateId}/design`, {
+        const res = await KJAuth.authFetch(`/api/template/${templateId}/design`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ designId }),
@@ -697,7 +700,7 @@ Ampang Jaya, Selangor"></textarea>
     window.saveDesign = saveDesign;
 
     // Load existing data
-    fetch(`/api/template/${templateId}`)
+    KJAuth.authFetch(`/api/template/${templateId}`)
       .then(r => r.json())
       .then(data => {
         const form = document.getElementById('editor-form');
@@ -904,7 +907,7 @@ Ampang Jaya, Selangor"></textarea>
       const item = giftItemsData[i];
       if (!item.ID) { item.RESERVED_BY = null; renderGiftItems(); return; }
       try {
-        const res = await fetch(`/api/template/${templateId}/gift-item/${item.ID}/release`, { method: 'POST' });
+        const res = await KJAuth.authFetch(`/api/template/${templateId}/gift-item/${item.ID}/release`, { method: 'POST' });
         const json = await res.json();
         if (json.success) {
           item.RESERVED_BY = null;
@@ -925,7 +928,7 @@ Ampang Jaya, Selangor"></textarea>
       try {
         const formData = new FormData();
         formData.append('image', fileInput.files[0]);
-        const res = await fetch(`/api/template/${templateId}/gift-item-image`, { method: 'POST', body: formData });
+        const res = await KJAuth.authFetch(`/api/template/${templateId}/gift-item-image`, { method: 'POST', body: formData });
         const json = await res.json();
         if (json.success) {
           giftItemsData[i].IMAGE_URL = json.imageUrl;
@@ -960,7 +963,7 @@ Ampang Jaya, Selangor"></textarea>
     }
     async function saveSilently(partial) {
       try {
-        await fetch(`/api/template/${templateId}/save`, {
+        await KJAuth.authFetch(`/api/template/${templateId}/save`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(partial),
@@ -982,7 +985,7 @@ Ampang Jaya, Selangor"></textarea>
       try {
         const formData = new FormData();
         formData.append('photo', fileInput.files[0]);
-        const res = await fetch(`/api/template/${templateId}/prewedding`, { method: 'POST', body: formData });
+        const res = await KJAuth.authFetch(`/api/template/${templateId}/prewedding`, { method: 'POST', body: formData });
         const json = await res.json();
         if (json.success) {
           preweddingPhotos = json.photos;
@@ -1008,7 +1011,7 @@ Ampang Jaya, Selangor"></textarea>
       const name = document.getElementById('template-name-input').value;
       btn.disabled = true;
       try {
-        const res = await fetch(`/api/template/${templateId}/rename`, {
+        const res = await KJAuth.authFetch(`/api/template/${templateId}/rename`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name }),
@@ -1037,7 +1040,7 @@ Ampang Jaya, Selangor"></textarea>
       const slug = document.getElementById('slug-input').value.trim().toLowerCase();
       btn.disabled = true;
       try {
-        const res = await fetch(`/api/template/${templateId}/slug`, {
+        const res = await KJAuth.authFetch(`/api/template/${templateId}/slug`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ slug }),
@@ -1064,7 +1067,7 @@ Ampang Jaya, Selangor"></textarea>
       const totalSeconds = min * 60 + sec;
       btn.disabled = true;
       try {
-        const res = await fetch(`/api/template/${templateId}/save`, {
+        const res = await KJAuth.authFetch(`/api/template/${templateId}/save`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ MUSIC_START_TIME: totalSeconds }),
@@ -1091,7 +1094,7 @@ Ampang Jaya, Selangor"></textarea>
       try {
         const formData = new FormData();
         formData.append('music', fileInput.files[0]);
-        const res = await fetch(`/api/template/${templateId}/music`, {
+        const res = await KJAuth.authFetch(`/api/template/${templateId}/music`, {
           method: 'POST',
           body: formData,
         });
@@ -1124,7 +1127,7 @@ Ampang Jaya, Selangor"></textarea>
       try {
         const formData = new FormData();
         formData.append('qr', fileInput.files[0]);
-        const res = await fetch(`/api/template/${templateId}/gift-qr`, {
+        const res = await KJAuth.authFetch(`/api/template/${templateId}/gift-qr`, {
           method: 'POST',
           body: formData,
         });
@@ -1218,7 +1221,7 @@ Ampang Jaya, Selangor"></textarea>
       }
 
       try {
-        const res  = await fetch(`/api/template/${templateId}/save`, {
+        const res  = await KJAuth.authFetch(`/api/template/${templateId}/save`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data),

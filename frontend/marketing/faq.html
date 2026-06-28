@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ms" id="html-root">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Soalan Lazim — KadJemputan</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lato:wght@300;400;700;900&display=swap" rel="stylesheet" />
+<link href="/marketing-assets/_shared.css" rel="stylesheet" />
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          plum: '#3b1f33', 'plum-light': '#5c3354', 'plum-dark': '#241220',
+          rose: '#c98ba0', 'rose-light': '#f2dde3', 'rose-gold': '#caa15f',
+          navy: '#11243f', ink: '#1b1424', cream: '#fbf7f4',
+        },
+        fontFamily: { playfair: ['"Playfair Display"', 'serif'], lato: ['Lato', 'sans-serif'] },
+      },
+    },
+  };
+</script>
+<style>
+  .faq-item .faq-a { max-height: 0; overflow: hidden; transition: max-height .3s ease; }
+  .faq-item.open .faq-a { max-height: 300px; }
+  .faq-item .chevron { transition: transform .3s ease; }
+  .faq-item.open .chevron { transform: rotate(180deg); }
+</style>
+</head>
+<body class="text-plum-dark">
+
+<header class="sticky top-0 left-0 w-full z-40 backdrop-blur-md bg-cream/80 border-b border-rose-light">
+  <div class="max-w-7xl mx-auto flex items-center justify-between px-5 py-3">
+    <div class="flex items-center gap-3">
+      <button id="menu-btn" aria-label="Menu" class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-rose-light transition">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3b1f33" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <a href="/" class="font-playfair font-bold text-lg sm:text-xl text-plum">Kad<span class="text-rose-gold">Jemputan</span></a>
+    </div>
+    <button id="lang-toggle" class="text-xs font-bold px-3 py-1.5 rounded-full border border-plum/20 hover:bg-plum hover:text-cream transition">
+      <span data-lang="ms">EN</span><span data-lang="en">BM</span>
+    </button>
+  </div>
+</header>
+
+<div id="sidebar-overlay" class="fixed inset-0 bg-ink/50 z-40"></div>
+<aside id="sidebar" class="fixed top-0 left-0 h-full w-72 bg-cream z-50 shadow-2xl flex flex-col">
+  <div class="flex items-center justify-between px-6 py-5 border-b border-rose-light">
+    <span class="font-playfair font-bold text-xl text-plum">Menu</span>
+    <button id="sidebar-close" aria-label="Tutup" class="w-9 h-9 rounded-full flex items-center justify-center hover:bg-rose-light">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3b1f33" stroke-width="2" stroke-linecap="round"><line x1="4" y1="4" x2="20" y2="20"/><line x1="20" y1="4" x2="4" y2="20"/></svg>
+    </button>
+  </div>
+  <nav class="flex-1 py-4 overflow-y-auto">
+    <a href="/" class="sidebar-link flex items-center gap-3 px-6 py-3.5 text-plum font-semibold"><span>🏠</span><span data-lang="ms">Landing Page</span><span data-lang="en">Landing Page</span></a>
+    <a href="/catalog" class="sidebar-link flex items-center gap-3 px-6 py-3.5 text-plum font-semibold"><span>🗂️</span><span data-lang="ms">Katalog</span><span data-lang="en">Catalog</span></a>
+    <a href="/package" class="sidebar-link flex items-center gap-3 px-6 py-3.5 text-plum font-semibold"><span>💎</span><span data-lang="ms">Pakej</span><span data-lang="en">Package</span></a>
+    <a href="/faq" class="sidebar-link flex items-center gap-3 px-6 py-3.5 text-plum font-semibold bg-rose-light/40"><span>❓</span><span data-lang="ms">Soalan Lazim</span><span data-lang="en">FAQ</span></a>
+    <a href="/contact" class="sidebar-link flex items-center gap-3 px-6 py-3.5 text-plum font-semibold"><span>✉️</span><span data-lang="ms">Hubungi Kami</span><span data-lang="en">Contact Us</span></a>
+    <div class="my-3 border-t border-rose-light"></div>
+    <a href="/profile" class="sidebar-link flex items-center gap-3 px-6 py-3.5 text-plum font-semibold"><span>👤</span><span data-lang="ms">Profil / Log Masuk</span><span data-lang="en">Profile / Login</span></a>
+  </nav>
+</aside>
+
+<section class="pt-16 pb-20 px-6 max-w-3xl mx-auto">
+  <div class="text-center mb-14 reveal">
+    <span class="text-rose-gold font-bold text-xs tracking-widest"><span data-lang="ms">SOALAN LAZIM</span><span data-lang="en">FAQ</span></span>
+    <h1 class="font-playfair text-3xl sm:text-4xl font-bold text-plum mt-3">
+      <span data-lang="ms">Ada Soalan? Kami Ada Jawapan</span>
+      <span data-lang="en">Got Questions? We Have Answers</span>
+    </h1>
+    <div class="orn-divider mt-5"></div>
+  </div>
+
+  <div class="space-y-4" id="faq-list">
+    <div class="faq-item reveal bg-white rounded-xl border border-rose-light overflow-hidden">
+      <button class="faq-q w-full flex items-center justify-between text-left px-6 py-4 font-bold text-plum">
+        <span><span data-lang="ms">Berapa lama proses siapkan kad jemputan?</span><span data-lang="en">How long does it take to complete a card?</span></span>
+        <span class="chevron text-rose-gold">▾</span>
+      </button>
+      <div class="faq-a px-6 text-sm text-plum/70 leading-relaxed">
+        <p class="pb-4"><span data-lang="ms">Secara purata 1-3 hari bekerja selepas semua maklumat dan gambar diterima, bergantung pakej yang dipilih.</span><span data-lang="en">On average 1-3 business days after all information and photos are received, depending on the package chosen.</span></p>
+      </div>
+    </div>
+
+    <div class="faq-item reveal bg-white rounded-xl border border-rose-light overflow-hidden">
+      <button class="faq-q w-full flex items-center justify-between text-left px-6 py-4 font-bold text-plum">
+        <span><span data-lang="ms">Bolehkah saya tukar reka bentuk selepas membeli?</span><span data-lang="en">Can I change the design after purchase?</span></span>
+        <span class="chevron text-rose-gold">▾</span>
+      </button>
+      <div class="faq-a px-6 text-sm text-plum/70 leading-relaxed">
+        <p class="pb-4"><span data-lang="ms">Template yang dipilih semasa pembelian akan dikaitkan dengan akaun anda. Untuk tukar reka bentuk, sila hubungi kami untuk semakan.</span><span data-lang="en">The template chosen at purchase is linked to your account. To change designs, please contact us for review.</span></p>
+      </div>
+    </div>
+
+    <div class="faq-item reveal bg-white rounded-xl border border-rose-light overflow-hidden">
+      <button class="faq-q w-full flex items-center justify-between text-left px-6 py-4 font-bold text-plum">
+        <span><span data-lang="ms">Apa beza pakej Bronze, Platinum dan Gold?</span><span data-lang="en">What's the difference between Bronze, Platinum and Gold?</span></span>
+        <span class="chevron text-rose-gold">▾</span>
+      </button>
+      <div class="faq-a px-6 text-sm text-plum/70 leading-relaxed">
+        <p class="pb-4"><span data-lang="ms">Lihat perbandingan penuh di halaman <a href="/package" class="text-rose-gold font-bold hover:underline">Pakej</a>.</span><span data-lang="en">See the full comparison on the <a href="/package" class="text-rose-gold font-bold hover:underline">Package</a> page.</span></p>
+      </div>
+    </div>
+
+    <div class="faq-item reveal bg-white rounded-xl border border-rose-light overflow-hidden">
+      <button class="faq-q w-full flex items-center justify-between text-left px-6 py-4 font-bold text-plum">
+        <span><span data-lang="ms">Bagaimana cara untuk RSVP/buat pembayaran?</span><span data-lang="en">How do I pay / make a purchase?</span></span>
+        <span class="chevron text-rose-gold">▾</span>
+      </button>
+      <div class="faq-a px-6 text-sm text-plum/70 leading-relaxed">
+        <p class="pb-4"><span data-lang="ms">Daftar akaun di halaman <a href="/profile" class="text-rose-gold font-bold hover:underline">Profil</a>, pilih template di Katalog, dan ikuti arahan pembayaran.</span><span data-lang="en">Register an account on the <a href="/profile" class="text-rose-gold font-bold hover:underline">Profile</a> page, choose a template in the Catalog, and follow the payment instructions.</span></p>
+      </div>
+    </div>
+
+    <div class="faq-item reveal bg-white rounded-xl border border-rose-light overflow-hidden">
+      <button class="faq-q w-full flex items-center justify-between text-left px-6 py-4 font-bold text-plum">
+        <span><span data-lang="ms">Adakah kad ini boleh dikongsi di WhatsApp/Telegram?</span><span data-lang="en">Can the card be shared on WhatsApp/Telegram?</span></span>
+        <span class="chevron text-rose-gold">▾</span>
+      </button>
+      <div class="faq-a px-6 text-sm text-plum/70 leading-relaxed">
+        <p class="pb-4"><span data-lang="ms">Ya, setiap kad mempunyai pautan web yang boleh dikongsi terus di mana-mana platform.</span><span data-lang="en">Yes, every card has a web link that can be shared directly on any platform.</span></p>
+      </div>
+    </div>
+  </div>
+
+  <p class="text-center text-plum/50 text-sm mt-12 reveal">
+    <span data-lang="ms">Tidak jumpa jawapan? </span><span data-lang="en">Didn't find your answer? </span>
+    <a href="/contact" class="text-rose-gold font-bold hover:underline"><span data-lang="ms">Hubungi kami</span><span data-lang="en">Contact us</span></a>
+  </p>
+</section>
+
+<script src="/marketing-assets/_shared.js"></script>
+<script>
+  document.querySelectorAll('.faq-q').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      btn.closest('.faq-item').classList.toggle('open');
+    });
+  });
+</script>
+</body>
+</html>

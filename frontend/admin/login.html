@@ -79,6 +79,7 @@
     </p>
   </div>
 
+  <script src="/shared-assets/auth-client.js"></script>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
@@ -126,7 +127,9 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ idToken }),
         });
+        const json = await res.json();
         if (res.ok) {
+          window.KJAuth.setStoredToken(json.idToken, json.user);
           location.href = '/admin/dashboard';
         } else {
           showError();

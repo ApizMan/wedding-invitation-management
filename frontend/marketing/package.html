@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ms" id="html-root">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Pakej — KadJemputan</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lato:wght@300;400;700;900&display=swap" rel="stylesheet" />
+<link href="/marketing-assets/_shared.css" rel="stylesheet" />
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          plum: '#3b1f33', 'plum-light': '#5c3354', 'plum-dark': '#241220',
+          rose: '#c98ba0', 'rose-light': '#f2dde3', 'rose-gold': '#caa15f',
+          navy: '#11243f', ink: '#1b1424', cream: '#fbf7f4',
+        },
+        fontFamily: { playfair: ['"Playfair Display"', 'serif'], lato: ['Lato', 'sans-serif'] },
+      },
+    },
+  };
+</script>
+<style>
+  .pkg-card { transition: transform .35s ease, box-shadow .35s ease; }
+  .pkg-card:hover { transform: translateY(-10px) scale(1.02); box-shadow: 0 30px 60px rgba(59,31,51,.22); }
+  .pkg-featured { border: 2px solid #caa15f !important; }
+  table.cmp th, table.cmp td { padding: 14px 16px; }
+  table.cmp tr:nth-child(even) { background: rgba(242,221,227,.3); }
+</style>
+</head>
+<body class="text-plum-dark">
+
+<header class="sticky top-0 left-0 w-full z-40 backdrop-blur-md bg-cream/80 border-b border-rose-light">
+  <div class="max-w-7xl mx-auto flex items-center justify-between px-5 py-3">
+    <div class="flex items-center gap-3">
+      <button id="menu-btn" aria-label="Menu" class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-rose-light transition">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3b1f33" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <a href="/" class="font-playfair font-bold text-lg sm:text-xl text-plum">Kad<span class="text-rose-gold">Jemputan</span></a>
+    </div>
+    <button id="lang-toggle" class="text-xs font-bold px-3 py-1.5 rounded-full border border-plum/20 hover:bg-plum hover:text-cream transition">
+      <span data-lang="ms">EN</span><span data-lang="en">BM</span>
+    </button>
+  </div>
+</header>
+
+<div id="sidebar-overlay" class="fixed inset-0 bg-ink/50 z-40"></div>
+<aside id="sidebar" class="fixed top-0 left-0 h-full w-72 bg-cream z-50 shadow-2xl flex flex-col">
+  <div class="flex items-center justify-between px-6 py-5 border-b border-rose-light">
+    <span class="font-playfair font-bold text-xl text-plum">Menu</span>
+    <button id="sidebar-close" aria-label="Tutup" class="w-9 h-9 rounded-full flex items-center justify-center hover:bg-rose-light">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3b1f33" stroke-width="2" stroke-linecap="round"><line x1="4" y1="4" x2="20" y2="20"/><line x1="20" y1="4" x2="4" y2="20"/></svg>
+    </button>
+  </div>
+  <nav class="flex-1 py-4 overflow-y-auto">
+    <a href="/" class="sidebar-link flex items-center gap-3 px-6 py-3.5 text-plum font-semibold"><span>🏠</span><span data-lang="ms">Landing Page</span><span data-lang="en">Landing Page</span></a>
+    <a href="/catalog" class="sidebar-link flex items-center gap-3 px-6 py-3.5 text-plum font-semibold"><span>🗂️</span><span data-lang="ms">Katalog</span><span data-lang="en">Catalog</span></a>
+    <a href="/package" class="sidebar-link flex items-center gap-3 px-6 py-3.5 text-plum font-semibold bg-rose-light/40"><span>💎</span><span data-lang="ms">Pakej</span><span data-lang="en">Package</span></a>
+    <a href="/faq" class="sidebar-link flex items-center gap-3 px-6 py-3.5 text-plum font-semibold"><span>❓</span><span data-lang="ms">Soalan Lazim</span><span data-lang="en">FAQ</span></a>
+    <a href="/contact" class="sidebar-link flex items-center gap-3 px-6 py-3.5 text-plum font-semibold"><span>✉️</span><span data-lang="ms">Hubungi Kami</span><span data-lang="en">Contact Us</span></a>
+    <div class="my-3 border-t border-rose-light"></div>
+    <a href="/profile" class="sidebar-link flex items-center gap-3 px-6 py-3.5 text-plum font-semibold"><span>👤</span><span data-lang="ms">Profil / Log Masuk</span><span data-lang="en">Profile / Login</span></a>
+  </nav>
+</aside>
+
+<section class="pt-16 pb-10 px-6 max-w-7xl mx-auto">
+  <div class="text-center mb-14 reveal">
+    <span class="text-rose-gold font-bold text-xs tracking-widest"><span data-lang="ms">PAKEJ</span><span data-lang="en">PACKAGES</span></span>
+    <h1 class="font-playfair text-3xl sm:text-4xl font-bold text-plum mt-3">
+      <span data-lang="ms">Bandingkan &amp; Pilih Pakej Anda</span>
+      <span data-lang="en">Compare &amp; Choose Your Package</span>
+    </h1>
+    <div class="orn-divider mt-5"></div>
+  </div>
+
+  <div class="grid md:grid-cols-3 gap-8 items-start mb-16" id="bronze">
+    <div class="reveal pkg-card bg-white rounded-2xl border border-rose-light p-8 shadow-sm">
+      <div class="text-3xl mb-3">🥉</div>
+      <h3 class="font-playfair text-xl font-bold text-plum mb-1">Bronze</h3>
+      <p class="text-sm text-plum/50 mb-5"><span data-lang="ms">Untuk yang ringkas &amp; jimat</span><span data-lang="en">Simple &amp; budget-friendly</span></p>
+      <p class="font-playfair text-3xl font-bold text-plum mb-5">RM30</p>
+      <ul class="space-y-2 text-sm text-plum/70 mb-6">
+        <li class="flex gap-2"><span class="text-green-600">✓</span> <span data-lang="ms">Lokasi</span><span data-lang="en">Location</span></li>
+        <li class="flex gap-2"><span class="text-green-600">✓</span> <span data-lang="ms">Atur Cara Tersendiri</span><span data-lang="en">Custom Itinerary</span></li>
+        <li class="flex gap-2"><span class="text-green-600">✓</span> <span data-lang="ms">Reka Bentuk</span><span data-lang="en">Design</span></li>
+      </ul>
+      <a href="/profile" class="block text-center btn-glow border-2 border-plum text-plum font-bold py-3 rounded-full"><span data-lang="ms">Pilih Bronze</span><span data-lang="en">Choose Bronze</span></a>
+    </div>
+    <div id="platinum" class="reveal pkg-card pkg-featured bg-plum rounded-2xl p-8 shadow-2xl relative md:-translate-y-4">
+      <span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-rose-gold text-plum-dark text-xs font-bold px-4 py-1 rounded-full"><span data-lang="ms">PALING POPULAR</span><span data-lang="en">MOST POPULAR</span></span>
+      <div class="text-3xl mb-3">🥈</div>
+      <h3 class="font-playfair text-xl font-bold text-cream mb-1">Platinum</h3>
+      <p class="text-sm text-cream/60 mb-5"><span data-lang="ms">Pilihan seimbang</span><span data-lang="en">Balanced choice</span></p>
+      <p class="font-playfair text-3xl font-bold text-rose-gold mb-5">RM35</p>
+      <ul class="space-y-2 text-sm text-cream/80 mb-6">
+        <li class="flex gap-2"><span class="text-rose-gold">✓</span> <span data-lang="ms">Semua ciri Bronze</span><span data-lang="en">Everything in Bronze</span></li>
+        <li class="flex gap-2"><span class="text-rose-gold">✓</span> <span data-lang="ms">Ucapan &amp; Doa</span><span data-lang="en">Wishes &amp; messages</span></li>
+        <li class="flex gap-2"><span class="text-rose-gold">✓</span> <span data-lang="ms">RSVP &amp; Kehadiran</span><span data-lang="en">RSVP &amp; attendance</span></li>
+        <li class="flex gap-2"><span class="text-rose-gold">✓</span> <span data-lang="ms">Pautan Tersendiri</span><span data-lang="en">Custom link</span></li>
+      </ul>
+      <a href="/profile" class="block text-center btn-glow bg-rose-gold text-plum-dark font-bold py-3 rounded-full"><span data-lang="ms">Pilih Platinum</span><span data-lang="en">Choose Platinum</span></a>
+    </div>
+    <div id="gold" class="reveal pkg-card bg-white rounded-2xl border border-rose-light p-8 shadow-sm">
+      <div class="text-3xl mb-3">🥇</div>
+      <h3 class="font-playfair text-xl font-bold text-plum mb-1">Gold</h3>
+      <p class="text-sm text-plum/50 mb-5"><span data-lang="ms">Semua ciri, tanpa had</span><span data-lang="en">Everything, unlimited</span></p>
+      <p class="font-playfair text-3xl font-bold text-plum mb-5">RM50</p>
+      <ul class="space-y-2 text-sm text-plum/70 mb-6">
+        <li class="flex gap-2"><span class="text-green-600">✓</span> <span data-lang="ms">Semua ciri Platinum</span><span data-lang="en">Everything in Platinum</span></li>
+        <li class="flex gap-2"><span class="text-green-600">✓</span> <span data-lang="ms">Muzik Latar</span><span data-lang="en">Background music</span></li>
+        <li class="flex gap-2"><span class="text-green-600">✓</span> <span data-lang="ms">Gambar Pre-Wedding</span><span data-lang="en">Pre-wedding photos</span></li>
+        <li class="flex gap-2"><span class="text-green-600">✓</span> <span data-lang="ms">Hadiah</span><span data-lang="en">Gift registry</span></li>
+      </ul>
+      <a href="/profile" class="block text-center btn-glow border-2 border-plum text-plum font-bold py-3 rounded-full"><span data-lang="ms">Pilih Gold</span><span data-lang="en">Choose Gold</span></a>
+    </div>
+  </div>
+
+  <!-- Comparison table -->
+  <div class="reveal overflow-x-auto rounded-2xl border border-rose-light">
+    <table class="cmp w-full text-sm bg-white">
+      <thead>
+        <tr class="bg-plum text-cream text-left">
+          <th><span data-lang="ms">Ciri / Setting</span><span data-lang="en">Feature / Setting</span></th>
+          <th class="text-center">Bronze<br><span class="text-rose-gold text-xs">RM30</span></th>
+          <th class="text-center">Platinum<br><span class="text-rose-gold text-xs">RM35</span></th>
+          <th class="text-center">Gold<br><span class="text-rose-gold text-xs">RM50</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td><span data-lang="ms">Reka Bentuk Kad Penuh</span><span data-lang="en">Full Card Design</span></td><td class="text-center">✓</td><td class="text-center">✓</td><td class="text-center">✓</td></tr>
+        <tr><td><span data-lang="ms">Lokasi</span><span data-lang="en">Location</span></td><td class="text-center">✓</td><td class="text-center">✓</td><td class="text-center">✓</td></tr>
+        <tr><td><span data-lang="ms">Atur Cara Tersendiri</span><span data-lang="en">Custom Itinerary</span></td><td class="text-center">✓</td><td class="text-center">✓</td><td class="text-center">✓</td></tr>
+        <tr><td><span data-lang="ms">Ucapan &amp; Doa</span><span data-lang="en">Wishes &amp; Messages</span></td><td class="text-center text-plum/30">✕</td><td class="text-center">✓</td><td class="text-center">✓</td></tr>
+        <tr><td><span data-lang="ms">RSVP &amp; Kehadiran</span><span data-lang="en">RSVP &amp; Attendance</span></td><td class="text-center text-plum/30">✕</td><td class="text-center">✓</td><td class="text-center">✓</td></tr>
+        <tr><td><span data-lang="ms">Pautan Tersendiri</span><span data-lang="en">Custom Link</span></td><td class="text-center text-plum/30">✕</td><td class="text-center">✓</td><td class="text-center">✓</td></tr>
+        <tr><td><span data-lang="ms">Muzik Latar</span><span data-lang="en">Background Music</span></td><td class="text-center text-plum/30">✕</td><td class="text-center text-plum/30">✕</td><td class="text-center">✓</td></tr>
+        <tr><td><span data-lang="ms">Gambar Pre-Wedding</span><span data-lang="en">Pre-Wedding Photos</span></td><td class="text-center text-plum/30">✕</td><td class="text-center text-plum/30">✕</td><td class="text-center">✓</td></tr>
+        <tr><td><span data-lang="ms">Senarai &amp; Tempahan Hadiah</span><span data-lang="en">Gift List &amp; Reservation</span></td><td class="text-center text-plum/30">✕</td><td class="text-center text-plum/30">✕</td><td class="text-center">✓</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<script src="/marketing-assets/_shared.js"></script>
+</body>
+</html>

@@ -4,6 +4,7 @@ import { db } from '../database/firebase';
 import { escapeHtml, deceasedPrefixBlock, deceasedBadge } from '../utils/html.util';
 import { renderThemeVars } from './theme.service';
 import { TemplateConfig, TEMPLATES_META, DEFAULT_DESIGN_ID } from './template.types';
+import { hasFeature, resolvePackage } from './package.service';
 
 const FRONTEND_TEMPLATES_DIR = path.join(__dirname, '..', '..', 'frontend', 'templates');
 
@@ -110,12 +111,19 @@ export async function renderTemplate(wid: string, config: TemplateConfig): Promi
 
   const html = fs.readFileSync(path.join(FRONTEND_TEMPLATES_DIR, designId, 'index.html'), 'utf8');
 
+  // Package tier gates RSVP / Wishes / Custom Slug / Music / Pre-Wedding / Gift — docs created
+  // before this system existed have no PACKAGE field and default to 'gold' so old demo weddings
+  // don't regress.
+  const pkg = resolvePackage(data.PACKAGE);
+
   data.TEMPLATE_ID = wid;
   data.MUSIC_URL = data.MUSIC_URL || '/assets/music/videoplayback.m4a';
   data.MUSIC_START_TIME = data.MUSIC_START_TIME ?? 89;
-  data.MUSIC_ENABLED = data.MUSIC_ENABLED === 'false' ? 'false' : 'true';
-  data.GIFT_ENABLED = data.GIFT_ENABLED === 'false' ? 'false' : 'true';
+  data.MUSIC_ENABLED = hasFeature(pkg, 'MUSIC') && data.MUSIC_ENABLED !== 'false' ? 'true' : 'false';
+  data.GIFT_ENABLED = hasFeature(pkg, 'GIFT') && data.GIFT_ENABLED !== 'false' ? 'true' : 'false';
   data.GIFT_NAV_DISPLAY = data.GIFT_ENABLED === 'false' ? 'none' : 'flex';
+  data.RSVP_NAV_DISPLAY = hasFeature(pkg, 'RSVP') ? 'flex' : 'none';
+  data.WISHES_NAV_DISPLAY = hasFeature(pkg, 'WISHES') ? 'flex' : 'none';
 
   // Handle Allahyarham prefix (groom side + bride side, each parent independently)
   data.GROOM_DAD_PREFIX_BLOCK   = deceasedPrefixBlock(data.GROOM_DAD_DECEASED === 'true');
@@ -146,15 +154,15 @@ export async function renderTemplate(wid: string, config: TemplateConfig): Promi
   data.THEME_VARS = renderThemeVars(data);
 
   // Pre-Wedding gallery (grid or slideshow, admin-configurable display mode)
-  const preweddingPhotos = Array.isArray(data.PREWEDDING_PHOTOS) ? data.PREWEDDING_PHOTOS : [];
-  data.PREWEDDING_ENABLED = data.PREWEDDING_ENABLED === 'true' ? 'true' : 'false';
+  const preweddingPhotos = hasFeature(pkg, 'PREWEDDING') && Array.isArray(data.PREWEDDING_PHOTOS) ? data.PREWEDDING_PHOTOS : [];
+  data.PREWEDDING_ENABLED = hasFeature(pkg, 'PREWEDDING') && data.PREWEDDING_ENABLED === 'true' ? 'true' : 'false';
   data.PREWEDDING_DISPLAY_MODE = data.PREWEDDING_DISPLAY_MODE === 'slideshow' ? 'slideshow' : 'grid';
   data.PREWEDDING_HTML = renderPreweddingHtml(preweddingPhotos, data.PREWEDDING_DISPLAY_MODE);
   data.PREWEDDING_SECTION_DISPLAY = (data.PREWEDDING_ENABLED === 'true' && preweddingPhotos.length > 0) ? 'block' : 'none';
   data.PREWEDDING_PHOTOS_JSON = JSON.stringify(preweddingPhotos.map((u: any) => String(u))).replace(/</g, '\\u003c');
 
   // Physical gift delivery block (items + address) — only shown if at least 1 gift item is listed
-  const giftItems = Array.isArray(data.GIFT_ITEMS) ? data.GIFT_ITEMS : [];
+  const giftItems = hasFeature(pkg, 'GIFT') && Array.isArray(data.GIFT_ITEMS) ? data.GIFT_ITEMS : [];
   // Backfill missing IDs (items saved before reservation feature existed) so reservation works immediately
   let giftItemsNeedBackfill = false;
   giftItems.forEach((item: any) => {
@@ -193,13 +201,17 @@ export async function renderTemplate(wid: string, config: TemplateConfig): Promi
   data.MAP_GOOGLE_URL = mapAddress ? `https://www.google.com/maps/search/?api=1&query=${encodedAddress}` : '';
   data.MAP_WAZE_URL = mapAddress ? `https://waze.com/ul?q=${encodedAddress}&navigate=yes` : '';
 
-  const wishesSnapshot = await db.collection('rsvps')
-    .where('templateId', '==', wid)
-    .where('type', '==', 'wish')
-    .get();
-  const wishes = wishesSnapshot.docs.map(doc => doc.data())
-    .sort((a: any, b: any) => String(b.submittedAt).localeCompare(String(a.submittedAt)));
-  data.WISHES_HTML = renderWishesHtml(wishes);
+  if (hasFeature(pkg, 'WISHES')) {
+    const wishesSnapshot = await db.collection('rsvps')
+      .where('templateId', '==', wid)
+      .where('type', '==', 'wish')
+      .get();
+    const wishes = wishesSnapshot.docs.map(doc => doc.data())
+      .sort((a: any, b: any) => String(b.submittedAt).localeCompare(String(a.submittedAt)));
+    data.WISHES_HTML = renderWishesHtml(wishes);
+  } else {
+    data.WISHES_HTML = '';
+  }
 
   return Object.entries(data).reduce((acc: string, [key, val]) => {
     if (typeof val === 'object') return acc; // skip arrays/objects (SCHEDULE, CONTACTS) — already rendered to HTML blocks above

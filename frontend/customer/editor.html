@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Edit Kad Jemputan Saya</title>
+  <script src="/shared-assets/auth-client.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family:'Lato',sans-serif; background:#fbf7f4; color:#3b1f33; }
+    .tab-btn { color:rgba(59,31,51,.5); border-bottom:2px solid transparent; padding:10px 18px; font-size:.85rem; cursor:pointer; transition:all .2s; white-space:nowrap; }
+    .tab-btn:hover { color:#caa15f; }
+    .tab-btn.active { color:#3b1f33; border-bottom-color:#caa15f; font-weight:700; }
+    .tab-panel { display:none; }
+    .tab-panel.active { display:block; }
+    .field-group { background:#ffffff; border:1px solid #f2dde3; border-radius:12px; padding:24px; margin-bottom:20px; }
+    .field-group h3 { font-family:'Playfair Display',serif; color:#3b1f33; font-size:1rem; margin-bottom:16px; padding-bottom:10px; border-bottom:1px solid #f2dde3; }
+    label { display:block; color:#9c6f7e; font-size:.7rem; letter-spacing:.14em; text-transform:uppercase; margin-bottom:6px; }
+    input[type=text], input[type=tel], textarea, input[type=datetime-local] {
+      width:100%; background:#fff; border:1px solid #f2dde3; border-radius:8px;
+      padding:10px 12px; color:#3b1f33; font-size:.9rem; transition:border-color .2s; font-family:'Lato',sans-serif;
+    }
+    input:focus, textarea:focus { outline:none; border-color:#caa15f; box-shadow:0 0 0 2px rgba(202,161,95,.15); }
+    textarea { resize:vertical; min-height:80px; }
+    .form-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    @media(max-width:600px) { .form-row { grid-template-columns:1fr; } }
+    .input-btn-row { display:grid; grid-template-columns:1fr auto; gap:16px; align-items:end; }
+    @media(max-width:600px) { .input-btn-row { grid-template-columns:1fr; } }
+    .btn-save { background:#3b1f33; border:none; border-radius:999px; padding:12px 28px; color:#fbf7f4; font-weight:700; font-size:.82rem; letter-spacing:.05em; cursor:pointer; transition:opacity .2s,transform .2s; }
+    .btn-save:hover { opacity:.9; transform:scale(1.02); }
+    .btn-save:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+    .toast { position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(80px); background:#3b1f33; border:1px solid #caa15f; color:#fbf7f4; padding:12px 24px; border-radius:999px; font-size:.85rem; z-index:999; transition:transform .3s ease,opacity .3s ease; opacity:0; }
+    .toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
+    .toast.error { background:#7c2d2d; border-color:#c97a7a; }
+    .toggle-wrap { display:flex; align-items:center; gap:10px; cursor:pointer; }
+    .toggle-wrap input[type=checkbox] { width:18px; height:18px; accent-color:#caa15f; cursor:pointer; }
+    .toggle-wrap span { color:#3b1f33; font-size:.88rem; }
+    .field-hint { color:rgba(59,31,51,.45); font-size:.72rem; margin-top:4px; }
+    .pending-banner { background:rgba(202,161,95,.15); border:1px solid rgba(202,161,95,.4); color:#8a6a2f; border-radius:12px; padding:16px 20px; margin-bottom:24px; font-size:.85rem; }
+  </style>
+</head>
+<body style="min-height:100vh;display:flex;flex-direction:column;">
+
+  <header style="background:#fff;border-bottom:1px solid #f2dde3;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;padding:14px 24px;flex-wrap:wrap;gap:10px;">
+    <div style="display:flex;align-items:center;gap:14px;">
+      <a href="/my/dashboard" style="display:flex;align-items:center;gap:6px;color:rgba(59,31,51,.6);text-decoration:none;font-size:.82rem;">← Dashboard</a>
+      <span style="color:rgba(59,31,51,.2);">/</span>
+      <span style="font-family:'Playfair Display',serif;color:#3b1f33;font-size:1rem;">Edit Kad Jemputan</span>
+    </div>
+    <a id="preview-btn" href="#" target="_blank" style="color:#3b1f33;font-size:.8rem;text-decoration:none;border:1px solid #f2dde3;padding:7px 16px;border-radius:999px;">👁 Pratonton</a>
+  </header>
+
+  <div style="flex:1;padding:28px 24px;max-width:900px;margin:0 auto;width:100%;">
+
+    <div id="pending-banner" class="pending-banner hidden">⏳ Kad anda sedang menunggu pengesahan pembayaran oleh admin. Anda boleh kustomkan kad sementara menunggu.</div>
+
+    <!-- Tabs -->
+    <div style="display:flex;border-bottom:1px solid #f2dde3;margin-bottom:28px;overflow-x:auto;gap:0;">
+      <button class="tab-btn active" onclick="switchTab('pengantin',this)">👫 Pengantin</button>
+      <button class="tab-btn" onclick="switchTab('acara',this)">📍 Tarikh &amp; Lokasi</button>
+      <button class="tab-btn" onclick="switchTab('aturcara',this)">🕐 Aturcara</button>
+      <button class="tab-btn" onclick="switchTab('keluarga',this)">👨‍👩‍👧 Keluarga</button>
+      <button class="tab-btn" onclick="switchTab('kenalan',this)">📞 Kenalan</button>
+      <button class="tab-btn" id="tab-btn-prewedding" onclick="switchTab('prewedding',this)" style="display:none;">📷 Pre-Wedding</button>
+      <button class="tab-btn" id="tab-btn-muzik" onclick="switchTab('muzik',this)" style="display:none;">🎵 Muzik</button>
+      <button class="tab-btn" id="tab-btn-hadiah" onclick="switchTab('hadiah',this)" style="display:none;">🎁 Hadiah</button>
+      <button class="tab-btn" id="tab-btn-pautan" onclick="switchTab('pautan',this)" style="display:none;">🔗 Pautan Tersendiri</button>
+    </div>
+
+    <form id="editor-form" onsubmit="saveTemplate(event)">
+
+      <!-- TAB: PENGANTIN -->
+      <div class="tab-panel active" id="tab-pengantin">
+        <div class="field-group">
+          <h3>Maklumat Pengantin</h3>
+          <div class="form-row" style="margin-bottom:16px;">
+            <div><label>Nama Pengantin Lelaki</label><input type="text" name="GROOM_NAME" placeholder="cth: Muhammad Nafiz"></div>
+            <div><label>Bin</label><input type="text" name="GROOM_BIN" placeholder="cth: bin Mansor"></div>
+          </div>
+          <div class="form-row" style="margin-bottom:16px;">
+            <div><label>Nama Pengantin Perempuan</label><input type="text" name="BRIDE_NAME" placeholder="cth: Nur Atiqah"></div>
+            <div><label>Binti</label><input type="text" name="BRIDE_BINTI" placeholder="cth: binti Zukapeli"></div>
+          </div>
+          <div class="form-row">
+            <div><label>Nama Penuh Pengantin Lelaki</label><input type="text" name="GROOM_FULL" placeholder="cth: Muhammad Nafiz bin Mansor"></div>
+            <div><label>Nama Penuh Pengantin Perempuan</label><input type="text" name="BRIDE_FULL" placeholder="cth: Nur Atiqah binti Zukapeli"></div>
+          </div>
+        </div>
+        <div class="field-group">
+          <h3>Tajuk Halaman</h3>
+          <label>Tajuk Tab Browser</label>
+          <input type="text" name="PAGE_TITLE" placeholder="cth: Walimatul Urus | Nafiz & Atiqah">
+        </div>
+        <div class="field-group">
+          <h3>Notis Majlis</h3>
+          <label>Teks Notis (dipaparkan dalam kotak maklumat)</label>
+          <textarea name="NOTICE_TEXT" rows="3" placeholder="Tulis notis berkenaan majlis di sini..."></textarea>
+        </div>
+      </div>
+
+      <!-- TAB: ACARA -->
+      <div class="tab-panel" id="tab-acara">
+        <div class="field-group">
+          <h3>Maklumat Tarikh</h3>
+          <div class="form-row">
+            <div>
+              <label>Tarikh &amp; Masa Acara</label>
+              <input type="datetime-local" id="event-datetime-picker">
+              <p class="field-hint">Tarikh papar &amp; tarikh ringkas dijana automatik.</p>
+              <input type="hidden" name="EVENT_DATE_DISPLAY">
+              <input type="hidden" name="EVENT_DATE_SHORT">
+              <input type="hidden" name="EVENT_DATE_ISO">
+            </div>
+            <div><label>Lokasi (Negeri)</label><input type="text" name="EVENT_LOCATION" placeholder="Ampang, Selangor"></div>
+          </div>
+        </div>
+        <div class="field-group">
+          <h3>Akad Nikah</h3>
+          <div class="form-row" style="margin-bottom:16px;">
+            <div><label>Nama Masjid / Tempat</label><input type="text" name="AKAD_LOCATION_NAME" placeholder="Masjid Al-Mustaqim"></div>
+            <div><label>Lokasi Detail</label><input type="text" name="AKAD_LOCATION_DETAIL" placeholder="Ampang, Selangor"></div>
+          </div>
+          <div class="form-row">
+            <div><label>Tarikh &amp; Masa Mula Akad</label><input type="datetime-local" id="akad-start-picker"></div>
+            <div><label>Masa Tamat Akad</label><input type="datetime-local" id="akad-end-picker"></div>
+          </div>
+          <input type="hidden" name="AKAD_DATE">
+          <input type="hidden" name="AKAD_TIME">
+        </div>
+        <div class="field-group">
+          <h3>Majlis Resepsi</h3>
+          <div class="form-row" style="margin-bottom:16px;">
+            <div><label>Nama Dewan / Hall</label><input type="text" name="MAJLIS_HALL" placeholder="RIQ Grand Hall"></div>
+            <div><label>Sub-lokasi</label><input type="text" name="MAJLIS_SUBLOC" placeholder="Fiesta Mall, Ampang Jaya"></div>
+          </div>
+          <div class="form-row" style="margin-bottom:16px;">
+            <div><label>Tarikh &amp; Masa Mula Majlis</label><input type="datetime-local" id="majlis-start-picker"></div>
+            <div><label>Masa Tamat Majlis</label><input type="datetime-local" id="majlis-end-picker"></div>
+          </div>
+          <input type="hidden" name="MAJLIS_DATE">
+          <input type="hidden" name="MAJLIS_TIME">
+          <div><label>Alamat Penuh (tekan Enter untuk baris baru)</label><textarea name="MAJLIS_ADDRESS" rows="3"></textarea></div>
+        </div>
+        <div class="field-group">
+          <h3>Lokasi (Map)</h3>
+          <label>Alamat Majlis untuk Navigasi</label>
+          <input type="text" name="MAP_ADDRESS" placeholder="Dewan Serbaguna Bahagia, Jalan Bahagia 5, 68000 Ampang, Selangor">
+          <p class="field-hint">Tetamu akan dibawa terus ke Google Maps / Waze menggunakan alamat ini.</p>
+        </div>
+      </div>
+
+      <!-- TAB: ATURCARA -->
+      <div class="tab-panel" id="tab-aturcara">
+        <div id="aturcara-list"></div>
+        <button type="button" class="btn-save" style="width:100%;margin-bottom:20px;" onclick="addAturcara()">➕ Tambah Acara</button>
+      </div>
+
+      <!-- TAB: KELUARGA -->
+      <div class="tab-panel" id="tab-keluarga">
+        <div class="field-group">
+          <h3>Pihak Pengantin Lelaki</h3>
+          <div style="margin-bottom:14px;"><label>Nama Ayah</label><input type="text" name="GROOM_DAD"></div>
+          <div style="margin-bottom:14px;">
+            <label class="toggle-wrap" style="text-transform:none;letter-spacing:normal;">
+              <input type="checkbox" name="GROOM_DAD_DECEASED" value="true" onchange="toggleDeceased(this,'groom-dad-dua-field')">
+              <span>Ayah Sudah Meninggal Dunia (Allahyarham)</span>
+            </label>
+          </div>
+          <div id="groom-dad-dua-field" style="margin-bottom:14px;display:none;"><label>Teks Al-Fatihah / Doa</label><textarea name="GROOM_DAD_DUA" rows="2"></textarea></div>
+          <div style="margin-bottom:14px;"><label>Nama Mak</label><input type="text" name="GROOM_MOM"></div>
+          <div style="margin-bottom:14px;">
+            <label class="toggle-wrap" style="text-transform:none;letter-spacing:normal;">
+              <input type="checkbox" name="GROOM_MOM_DECEASED" value="true" onchange="toggleDeceased(this,'groom-mom-dua-field')">
+              <span>Mak Sudah Meninggal Dunia (Allahyarhamah)</span>
+            </label>
+          </div>
+          <div id="groom-mom-dua-field" style="margin-bottom:14px;display:none;"><label>Teks Al-Fatihah / Doa</label><textarea name="GROOM_MOM_DUA" rows="2"></textarea></div>
+          <div><label>Wali (pilihan)</label><input type="text" name="GROOM_WALI"></div>
+        </div>
+        <div class="field-group">
+          <h3>Pihak Pengantin Perempuan</h3>
+          <div style="margin-bottom:14px;"><label>Nama Ayah</label><input type="text" name="BRIDE_DAD"></div>
+          <div style="margin-bottom:14px;">
+            <label class="toggle-wrap" style="text-transform:none;letter-spacing:normal;">
+              <input type="checkbox" name="BRIDE_DAD_DECEASED" value="true" onchange="toggleDeceased(this,'bride-dad-dua-field')">
+              <span>Ayah Sudah Meninggal Dunia (Allahyarham)</span>
+            </label>
+          </div>
+          <div id="bride-dad-dua-field" style="margin-bottom:14px;display:none;"><label>Teks Al-Fatihah / Doa</label><textarea name="BRIDE_DAD_DUA" rows="2"></textarea></div>
+          <div style="margin-bottom:14px;"><label>Nama Mak</label><input type="text" name="BRIDE_MOM"></div>
+          <div style="margin-bottom:14px;">
+            <label class="toggle-wrap" style="text-transform:none;letter-spacing:normal;">
+              <input type="checkbox" name="BRIDE_MOM_DECEASED" value="true" onchange="toggleDeceased(this,'bride-mom-dua-field')">
+              <span>Mak Sudah Meninggal Dunia (Allahyarhamah)</span>
+            </label>
+          </div>
+          <div id="bride-mom-dua-field" style="margin-bottom:14px;display:none;"><label>Teks Al-Fatihah / Doa</label><textarea name="BRIDE_MOM_DUA" rows="2"></textarea></div>
+          <div><label>Wali (pilihan)</label><input type="text" name="BRIDE_WALI"></div>
+        </div>
+      </div>
+
+      <!-- TAB: KENALAN -->
+      <div class="tab-panel" id="tab-kenalan">
+        <div id="kenalan-list"></div>
+        <button type="button" class="btn-save" style="width:100%;margin-bottom:20px;" onclick="addKenalan()">➕ Tambah Kenalan</button>
+      </div>
+
+      <!-- TAB: PRE-WEDDING (Gold only) -->
+      <div class="tab-panel" id="tab-prewedding">
+        <div class="field-group">
+          <h3>Bahagian Pre-Wedding</h3>
+          <label class="toggle-wrap" style="text-transform:none;letter-spacing:normal;">
+            <input type="checkbox" name="PREWEDDING_ENABLED" value="true">
+            <span>Aktifkan Bahagian Pre-Wedding pada Kad Jemputan</span>
+          </label>
+          <p class="field-hint" style="margin-top:8px;">Sekurang-kurangnya 2 gambar wajib dimuat naik jika diaktifkan.</p>
+        </div>
+        <div class="field-group">
+          <h3>Paparan Galeri</h3>
+          <div class="form-row">
+            <label class="toggle-wrap" style="text-transform:none;letter-spacing:normal;border:1px solid #f2dde3;border-radius:8px;padding:12px;">
+              <input type="radio" name="PREWEDDING_DISPLAY_MODE" value="grid" checked><span>Grid</span>
+            </label>
+            <label class="toggle-wrap" style="text-transform:none;letter-spacing:normal;border:1px solid #f2dde3;border-radius:8px;padding:12px;">
+              <input type="radio" name="PREWEDDING_DISPLAY_MODE" value="slideshow"><span>Slideshow</span>
+            </label>
+          </div>
+        </div>
+        <div class="field-group">
+          <h3>Gambar Pre-Wedding (<span id="prewedding-count">0</span>/10)</h3>
+          <div id="prewedding-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:14px;margin-bottom:16px;"></div>
+          <div class="input-btn-row">
+            <input type="file" id="prewedding-file-input" accept="image/*" style="width:100%;border:1px solid #f2dde3;border-radius:8px;padding:10px 12px;">
+            <button type="button" class="btn-save" id="prewedding-upload-btn" onclick="uploadPrewedding()">Muat Naik</button>
+          </div>
+          <p class="field-hint">Maksimum 10 gambar, 5MB setiap satu.</p>
+        </div>
+      </div>
+
+      <!-- TAB: MUZIK (Platinum+) -->
+      <div class="tab-panel" id="tab-muzik">
+        <div class="field-group">
+          <h3>Muzik Latar</h3>
+          <label class="toggle-wrap" style="text-transform:none;letter-spacing:normal;margin-bottom:18px;">
+            <input type="checkbox" name="MUSIC_ENABLED" value="true" checked>
+            <span>Aktifkan Muzik Latar &amp; Butang Main/Henti</span>
+          </label>
+          <p class="field-hint" id="music-current" style="margin-bottom:10px;">Memuatkan...</p>
+          <div class="input-btn-row">
+            <div><label>Muat Naik Fail Muzik Baru</label><input type="file" id="music-file-input" accept="audio/*" style="width:100%;border:1px solid #f2dde3;border-radius:8px;padding:10px 12px;"></div>
+            <button type="button" class="btn-save" id="music-upload-btn" onclick="uploadMusic()">🎵 Muat Naik</button>
+          </div>
+          <p class="field-hint">Maksimum 25MB. Dimampatkan automatik.</p>
+          <div class="input-btn-row" style="margin-top:18px;">
+            <div>
+              <label>Mula Main Pada (minit : saat)</label>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <input type="text" id="music-start-min" placeholder="1" style="text-align:center;">
+                <span>:</span>
+                <input type="text" id="music-start-sec" placeholder="29" style="text-align:center;">
+              </div>
+            </div>
+            <button type="button" class="btn-save" id="start-time-btn" onclick="saveStartTime()">⏱ Simpan</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: HADIAH (Gold only) -->
+      <div class="tab-panel" id="tab-hadiah">
+        <div class="field-group">
+          <h3>Hadiah Pengantin</h3>
+          <label class="toggle-wrap" style="text-transform:none;letter-spacing:normal;margin-bottom:18px;">
+            <input type="checkbox" name="GIFT_ENABLED" value="true" checked>
+            <span>Aktifkan Bahagian Hadiah pada Kad Jemputan</span>
+          </label>
+          <p class="field-hint" id="gift-qr-current" style="margin-bottom:10px;">Memuatkan...</p>
+          <div class="input-btn-row">
+            <div><label>Muat Naik QR Code DuitNow</label><input type="file" id="gift-qr-file-input" accept="image/*" style="width:100%;border:1px solid #f2dde3;border-radius:8px;padding:10px 12px;"></div>
+            <button type="button" class="btn-save" id="gift-qr-upload-btn" onclick="uploadGiftQr()">🖼 Muat Naik</button>
+          </div>
+          <div class="form-row" style="margin-top:18px;">
+            <div><label>Nama Bank</label><input type="text" name="GIFT_BANK_NAME"></div>
+            <div><label>No. Akaun</label><input type="text" name="GIFT_BANK_ACCOUNT"></div>
+          </div>
+          <div style="margin-top:14px;"><label>Nama Pemilik Akaun</label><input type="text" name="GIFT_ACCOUNT_NAME"></div>
+          <div style="margin-top:14px;"><label>Alamat Penghantaran Hadiah Fizikal</label><textarea name="GIFT_ADDRESS" rows="4"></textarea></div>
+        </div>
+        <div class="field-group">
+          <h3>Senarai Barang Hadiah</h3>
+          <div id="gift-items-list"></div>
+          <button type="button" class="btn-save" style="margin-top:6px;" onclick="addGiftItem()">+ Tambah Barang</button>
+        </div>
+      </div>
+
+      <!-- TAB: PAUTAN TERSENDIRI (Platinum+) -->
+      <div class="tab-panel" id="tab-pautan">
+        <div class="field-group">
+          <h3>URL Custom</h3>
+          <div class="input-btn-row">
+            <div>
+              <label>URL Jemputan (cth: nafiz-atiqah)</label>
+              <input type="text" id="slug-input" placeholder="cth: nafiz-atiqah">
+              <p class="field-hint" id="slug-preview"></p>
+            </div>
+            <button type="button" class="btn-save" id="slug-btn" onclick="saveSlug()">🔗 Simpan URL</button>
+          </div>
+          <p class="field-hint">Huruf kecil, nombor, dan tanda sengkang (-) sahaja.</p>
+        </div>
+      </div>
+
+      <!-- Save Bar -->
+      <div style="position:sticky;bottom:0;background:rgba(251,247,244,.95);border-top:1px solid #f2dde3;padding:16px 0;margin-top:28px;display:flex;align-items:center;justify-content:flex-end;backdrop-filter:blur(8px);">
+        <button type="submit" class="btn-save" id="save-btn">💾 Simpan Perubahan</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    if (!KJAuth.getStoredToken()) { location.href = '/profile'; }
+
+    const templateId = location.pathname.split('/')[3]; // /my/template/{id}/edit
+    let aturcaraData = [], kenalanData = [], giftItemsData = [], currentGiftQrUrl = '', preweddingPhotos = [];
+    let pkg = 'bronze';
+
+    const FEATURE_TABS = {
+      PREWEDDING: ['tab-btn-prewedding'],
+      MUSIC: ['tab-btn-muzik'],
+      GIFT: ['tab-btn-hadiah'],
+      CUSTOM_SLUG: ['tab-btn-pautan'],
+    };
+    const PACKAGE_FEATURES = {
+      bronze: [],
+      platinum: ['RSVP', 'WISHES', 'CUSTOM_SLUG'],
+      gold: ['RSVP', 'WISHES', 'CUSTOM_SLUG', 'MUSIC', 'PREWEDDING', 'GIFT'],
+    };
+
+    function applyPackageGating() {
+      const allowed = PACKAGE_FEATURES[pkg] || [];
+      Object.entries(FEATURE_TABS).forEach(([feature, ids]) => {
+        const show = allowed.includes(feature);
+        ids.forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.style.display = show ? '' : 'none';
+        });
+      });
+    }
+
+    document.getElementById('preview-btn').href = `/w/${templateId}`;
+
+    KJAuth.authFetch(`/api/my/template/${templateId}`)
+      .then(r => r.json())
+      .then(data => {
+        pkg = ['bronze','platinum','gold'].includes(data.PACKAGE) ? data.PACKAGE : 'gold';
+        applyPackageGating();
+
+        if (data.PURCHASE_STATUS === 'pending') {
+          document.getElementById('pending-banner').classList.remove('hidden');
+        }
+
+        const form = document.getElementById('editor-form');
+        Object.entries(data).forEach(([key, val]) => {
+          const el = form.elements[key];
+          if (!el) return;
+          if (el.type === 'checkbox') el.checked = (val === 'true' || val === true);
+          else el.value = val;
+        });
+
+        [['GROOM_DAD_DECEASED','groom-dad-dua-field'],['GROOM_MOM_DECEASED','groom-mom-dua-field'],
+         ['BRIDE_DAD_DECEASED','bride-dad-dua-field'],['BRIDE_MOM_DECEASED','bride-mom-dua-field']]
+          .forEach(([name, fieldId]) => { const dec = form.elements[name]; if (dec) toggleDeceased(dec, fieldId); });
+
+        if (data.SLUG) document.getElementById('preview-btn').href = `/${data.SLUG}`;
+        document.getElementById('slug-input').value = data.SLUG || '';
+        updateSlugPreview();
+
+        document.getElementById('music-current').textContent = data.MUSIC_URL
+          ? '🎵 Muzik semasa: ' + data.MUSIC_URL.split('/').pop() : '🎵 Menggunakan muzik lalai.';
+        const startTime = Number(data.MUSIC_START_TIME ?? 89);
+        document.getElementById('music-start-min').value = Math.floor(startTime / 60);
+        document.getElementById('music-start-sec').value = startTime % 60;
+
+        aturcaraData = Array.isArray(data.SCHEDULE) ? data.SCHEDULE.slice() : [];
+        kenalanData  = Array.isArray(data.CONTACTS) ? data.CONTACTS.slice() : [];
+        renderAturcara(); renderKenalan();
+
+        if (data.EVENT_DATE_ISO) {
+          const d = new Date(data.EVENT_DATE_ISO);
+          if (!isNaN(d)) document.getElementById('event-datetime-picker').value = toLocalDatetimeValue(d);
+        }
+
+        const addrEl = form.elements['MAJLIS_ADDRESS'];
+        if (addrEl) addrEl.value = String(data.MAJLIS_ADDRESS || '').replace(/<br\s*\/?>/gi, '\n');
+        const giftAddrEl = form.elements['GIFT_ADDRESS'];
+        if (giftAddrEl) giftAddrEl.value = String(data.GIFT_ADDRESS || '').replace(/<br\s*\/?>/gi, '\n');
+
+        currentGiftQrUrl = data.GIFT_QR_URL || '';
+        document.getElementById('gift-qr-current').textContent = currentGiftQrUrl
+          ? '🖼 QR semasa: ' + currentGiftQrUrl.split('/').pop() : '🖼 Tiada QR dimuat naik lagi.';
+
+        giftItemsData = Array.isArray(data.GIFT_ITEMS) ? data.GIFT_ITEMS.slice() : [];
+        giftItemsData.forEach(item => {
+          if (!item.ID) item.ID = 'gift_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+          if (item.RESERVED_BY === undefined) item.RESERVED_BY = null;
+        });
+        renderGiftItems();
+
+        preweddingPhotos = Array.isArray(data.PREWEDDING_PHOTOS) ? data.PREWEDDING_PHOTOS.slice() : [];
+        renderPrewedding();
+        const mode = data.PREWEDDING_DISPLAY_MODE === 'slideshow' ? 'slideshow' : 'grid';
+        const modeEl = form.querySelector(`input[name="PREWEDDING_DISPLAY_MODE"][value="${mode}"]`);
+        if (modeEl) modeEl.checked = true;
+      });
+
+    const HARI_BM  = ['Ahad','Isnin','Selasa','Rabu','Khamis','Jumaat','Sabtu'];
+    const BULAN_BM = ['Januari','Februari','Mac','April','Mei','Jun','Julai','Ogos','September','Oktober','November','Disember'];
+    function formatTarikhPapar(d) { return `${HARI_BM[d.getDay()]}, ${d.getDate()} ${BULAN_BM[d.getMonth()]} ${d.getFullYear()}`; }
+    function formatTarikhRingkas(d) { return `${d.getDate()} ${BULAN_BM[d.getMonth()]} ${d.getFullYear()}`; }
+    function formatMasaBM(d) {
+      let h = d.getHours(), m = d.getMinutes();
+      const sesi = h < 12 ? 'pagi' : (h < 19 ? 'petang' : 'malam');
+      const h12 = h % 12 === 0 ? 12 : h % 12;
+      return `${h12}.${String(m).padStart(2,'0')} ${sesi}`;
+    }
+    function toLocalDatetimeValue(d) {
+      const pad = n => String(n).padStart(2,'0');
+      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    }
+    function isoOffsetString(d) {
+      const pad = n => String(n).padStart(2,'0');
+      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:00+08:00`;
+    }
+
+    const eventPicker = document.getElementById('event-datetime-picker');
+    eventPicker.addEventListener('input', () => {
+      if (!eventPicker.value) return;
+      const d = new Date(eventPicker.value);
+      document.querySelector('input[name="EVENT_DATE_DISPLAY"]').value = formatTarikhPapar(d);
+      document.querySelector('input[name="EVENT_DATE_SHORT"]').value   = formatTarikhRingkas(d);
+      document.querySelector('input[name="EVENT_DATE_ISO"]').value     = isoOffsetString(d);
+    });
+
+    const akadStart = document.getElementById('akad-start-picker');
+    const akadEnd = document.getElementById('akad-end-picker');
+    function syncAkad() {
+      if (!akadStart.value) return;
+      const start = new Date(akadStart.value);
+      document.querySelector('input[name="AKAD_DATE"]').value = formatTarikhPapar(start);
+      let timeStr = formatMasaBM(start);
+      if (akadEnd.value) timeStr += ' — ' + formatMasaBM(new Date(akadEnd.value));
+      document.querySelector('input[name="AKAD_TIME"]').value = timeStr;
+    }
+    akadStart.addEventListener('input', syncAkad);
+    akadEnd.addEventListener('input', syncAkad);
+
+    const majlisStart = document.getElementById('majlis-start-picker');
+    const majlisEnd = document.getElementById('majlis-end-picker');
+    function syncMajlis() {
+      if (!majlisStart.value) return;
+      const start = new Date(majlisStart.value);
+      document.querySelector('input[name="MAJLIS_DATE"]').value = formatTarikhPapar(start);
+      let timeStr = formatMasaBM(start);
+      if (majlisEnd.value) timeStr += ' — ' + formatMasaBM(new Date(majlisEnd.value));
+      document.querySelector('input[name="MAJLIS_TIME"]').value = timeStr;
+    }
+    majlisStart.addEventListener('input', syncMajlis);
+    majlisEnd.addEventListener('input', syncMajlis);
+
+    function stripTelPrefix(val) { return String(val ?? '').replace(/^\+?60[\s-]?/, ''); }
+    function addTelPrefix(val) { const t = String(val ?? '').trim(); return t ? '+60' + t : ''; }
+
+    function renderAturcara() {
+      const list = document.getElementById('aturcara-list');
+      list.innerHTML = aturcaraData.map((item, i) => `
+        <div class="field-group">
+          <h3 style="display:flex;justify-content:space-between;align-items:center;">
+            <span>Acara ${i + 1}</span>
+            <button type="button" onclick="removeAturcara(${i})" style="background:none;border:none;color:#c44;cursor:pointer;font-size:.85rem;">🗑 Buang</button>
+          </h3>
+          <div class="form-row" style="margin-bottom:12px;">
+            <div><label>Masa Mula</label><input type="text" value="${escAttr(item.TIME_START)}" oninput="updateAturcara(${i},'TIME_START',this.value)" placeholder="8.00 pagi"></div>
+            <div><label>Masa Tamat</label><input type="text" value="${escAttr(item.TIME_END)}" oninput="updateAturcara(${i},'TIME_END',this.value)" placeholder="10.00 pagi"></div>
+          </div>
+          <div class="form-row">
+            <div><label>Nama Acara</label><input type="text" value="${escAttr(item.TITLE)}" oninput="updateAturcara(${i},'TITLE',this.value)" placeholder="Majlis Akad Nikah"></div>
+            <div><label>Lokasi Acara</label><input type="text" value="${escAttr(item.LOC)}" oninput="updateAturcara(${i},'LOC',this.value)" placeholder="Masjid Al-Mustaqim, Ampang"></div>
+          </div>
+        </div>`).join('') || '<p class="field-hint" style="margin-bottom:16px;">Tiada acara lagi.</p>';
+    }
+    function addAturcara() { aturcaraData.push({ TIME_START:'', TIME_END:'', TITLE:'', LOC:'' }); renderAturcara(); }
+    function removeAturcara(i) { aturcaraData.splice(i, 1); renderAturcara(); }
+    function updateAturcara(i, key, val) { aturcaraData[i][key] = val; }
+    window.addAturcara = addAturcara; window.removeAturcara = removeAturcara; window.updateAturcara = updateAturcara;
+
+    function renderKenalan() {
+      const list = document.getElementById('kenalan-list');
+      list.innerHTML = kenalanData.map((item, i) => `
+        <div class="field-group">
+          <h3 style="display:flex;justify-content:space-between;align-items:center;">
+            <span>Kenalan ${i + 1}</span>
+            <button type="button" onclick="removeKenalan(${i})" style="background:none;border:none;color:#c44;cursor:pointer;font-size:.85rem;">🗑 Buang</button>
+          </h3>
+          <div class="form-row" style="margin-bottom:12px;">
+            <div><label>Label</label><input type="text" value="${escAttr(item.LABEL)}" oninput="updateKenalan(${i},'LABEL',this.value)" placeholder="Ayah Pengantin Lelaki"></div>
+            <div><label>Nama</label><input type="text" value="${escAttr(item.NAME)}" oninput="updateKenalan(${i},'NAME',this.value)" placeholder="En. Mansor bin Bechik"></div>
+          </div>
+          <div class="form-row">
+            <div><label>No. Telefon (Papar)</label><input type="tel" value="${escAttr(stripTelPrefix(item.PHONE))}" oninput="updateKenalan(${i},'PHONE',addTelPrefix(this.value))" placeholder="19-210 5630"></div>
+            <div><label>No. Telefon (Tel Link)</label><input type="tel" value="${escAttr(stripTelPrefix(item.TEL))}" oninput="updateKenalan(${i},'TEL',addTelPrefix(this.value))" placeholder="192105630"></div>
+          </div>
+        </div>`).join('') || '<p class="field-hint" style="margin-bottom:16px;">Tiada kenalan lagi.</p>';
+    }
+    function addKenalan() { kenalanData.push({ LABEL:'', NAME:'', PHONE:'', TEL:'' }); renderKenalan(); }
+    function removeKenalan(i) { kenalanData.splice(i, 1); renderKenalan(); }
+    function updateKenalan(i, key, val) { kenalanData[i][key] = val; }
+    window.addKenalan = addKenalan; window.removeKenalan = removeKenalan; window.updateKenalan = updateKenalan;
+
+    function renderGiftItems() {
+      const list = document.getElementById('gift-items-list');
+      list.innerHTML = giftItemsData.map((item, i) => `
+        <div class="field-group">
+          <h3 style="display:flex;justify-content:space-between;align-items:center;">
+            <span>Barang ${i + 1}</span>
+            <button type="button" onclick="removeGiftItem(${i})" style="background:none;border:none;color:#c44;cursor:pointer;font-size:.85rem;">🗑 Buang</button>
+          </h3>
+          <div style="margin-bottom:12px;"><label>Nama Barang</label><input type="text" value="${escAttr(item.NAME)}" oninput="updateGiftItem(${i},'NAME',this.value)" placeholder="cth: Periuk Nasi"></div>
+          <p class="field-hint" style="margin-bottom:6px;">${item.IMAGE_URL ? '🖼 Gambar semasa: ' + item.IMAGE_URL.split('/').pop() : '🖼 Tiada gambar dimuat naik lagi.'}</p>
+          <div class="input-btn-row">
+            <input type="file" accept="image/*" id="gift-item-file-${i}" style="width:100%;border:1px solid #f2dde3;border-radius:8px;padding:10px 12px;">
+            <button type="button" class="btn-save" onclick="uploadGiftItemImage(${i})">🖼 Muat Naik</button>
+          </div>
+        </div>`).join('') || '<p class="field-hint" style="margin-bottom:16px;">Tiada barang lagi.</p>';
+    }
+    function addGiftItem() { giftItemsData.push({ ID:'gift_'+Date.now()+'_'+Math.random().toString(36).slice(2,8), NAME:'', IMAGE_URL:'', RESERVED_BY:null }); renderGiftItems(); }
+    function removeGiftItem(i) { giftItemsData.splice(i, 1); renderGiftItems(); }
+    function updateGiftItem(i, key, val) { giftItemsData[i][key] = val; }
+    async function uploadGiftItemImage(i) {
+      const fileInput = document.getElementById(`gift-item-file-${i}`);
+      if (!fileInput.files[0]) { showToast('❌ Sila pilih fail imej dahulu', true); return; }
+      try {
+        const formData = new FormData();
+        formData.append('image', fileInput.files[0]);
+        const res = await KJAuth.authFetch(`/api/my/template/${templateId}/gift-item-image`, { method: 'POST', body: formData });
+        const json = await res.json();
+        if (json.success) { giftItemsData[i].IMAGE_URL = json.imageUrl; renderGiftItems(); showToast('✅ Gambar barang dimuat naik!'); }
+        else showToast('❌ ' + json.error, true);
+      } catch (err) { showToast('❌ Ralat memuat naik: ' + err.message, true); }
+    }
+    window.addGiftItem = addGiftItem; window.removeGiftItem = removeGiftItem;
+    window.updateGiftItem = updateGiftItem; window.uploadGiftItemImage = uploadGiftItemImage;
+
+    function renderPrewedding() {
+      document.getElementById('prewedding-count').textContent = preweddingPhotos.length;
+      const list = document.getElementById('prewedding-list');
+      list.innerHTML = preweddingPhotos.map((url, i) => `
+        <div style="position:relative;border:1px solid #f2dde3;border-radius:8px;overflow:hidden;aspect-ratio:3/4;">
+          <img src="${escAttr(url)}" style="width:100%;height:100%;object-fit:cover;display:block;">
+          <button type="button" onclick="removePrewedding(${i})" style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,.6);color:#fca5a5;border:none;border-radius:50%;width:24px;height:24px;cursor:pointer;">&times;</button>
+        </div>`).join('') || '<p class="field-hint">Tiada gambar lagi.</p>';
+      document.getElementById('prewedding-upload-btn').disabled = preweddingPhotos.length >= 10;
+    }
+    function removePrewedding(i) {
+      preweddingPhotos.splice(i, 1);
+      renderPrewedding();
+      KJAuth.authFetch(`/api/my/template/${templateId}/save`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ PREWEDDING_PHOTOS: preweddingPhotos }) }).catch(() => {});
+    }
+    async function uploadPrewedding() {
+      const fileInput = document.getElementById('prewedding-file-input');
+      const btn = document.getElementById('prewedding-upload-btn');
+      if (!fileInput.files[0]) { showToast('❌ Sila pilih fail imej dahulu', true); return; }
+      if (preweddingPhotos.length >= 10) { showToast('❌ Maksimum 10 gambar dibenarkan', true); return; }
+      btn.disabled = true; btn.textContent = 'Memuat naik...';
+      try {
+        const formData = new FormData();
+        formData.append('photo', fileInput.files[0]);
+        const res = await KJAuth.authFetch(`/api/my/template/${templateId}/prewedding`, { method: 'POST', body: formData });
+        const json = await res.json();
+        if (json.success) { preweddingPhotos = json.photos; renderPrewedding(); showToast('✅ ' + json.message); fileInput.value = ''; }
+        else showToast('❌ ' + json.error, true);
+      } catch (err) { showToast('❌ Ralat memuat naik: ' + err.message, true); }
+      btn.disabled = preweddingPhotos.length >= 10; btn.textContent = 'Muat Naik';
+    }
+    window.removePrewedding = removePrewedding; window.uploadPrewedding = uploadPrewedding;
+
+    function escAttr(str) { return String(str ?? '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    function updateSlugPreview() {
+      const slug = document.getElementById('slug-input').value.trim().toLowerCase();
+      document.getElementById('slug-preview').textContent = location.host + '/' + (slug || `w/${templateId}`);
+    }
+    document.getElementById('slug-input').addEventListener('input', updateSlugPreview);
+
+    async function saveSlug() {
+      const btn = document.getElementById('slug-btn');
+      const slug = document.getElementById('slug-input').value.trim().toLowerCase();
+      btn.disabled = true;
+      try {
+        const res = await KJAuth.authFetch(`/api/my/template/${templateId}/slug`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slug }) });
+        const json = await res.json();
+        if (json.success) { showToast('✅ ' + json.message); document.getElementById('preview-btn').href = `/${slug || 'w/' + templateId}`; }
+        else showToast('❌ ' + json.error, true);
+      } catch (err) { showToast('❌ Ralat: ' + err.message, true); }
+      btn.disabled = false;
+    }
+    window.saveSlug = saveSlug;
+
+    async function saveStartTime() {
+      const btn = document.getElementById('start-time-btn');
+      const min = parseInt(document.getElementById('music-start-min').value, 10) || 0;
+      const sec = parseInt(document.getElementById('music-start-sec').value, 10) || 0;
+      btn.disabled = true;
+      try {
+        const res = await KJAuth.authFetch(`/api/my/template/${templateId}/save`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ MUSIC_START_TIME: min * 60 + sec }) });
+        const json = await res.json();
+        if (json.success) showToast(`✅ Muzik akan mula main pada ${min}:${String(sec).padStart(2,'0')}`);
+        else showToast('❌ ' + json.error, true);
+      } catch (err) { showToast('❌ Ralat: ' + err.message, true); }
+      btn.disabled = false;
+    }
+    window.saveStartTime = saveStartTime;
+
+    async function uploadMusic() {
+      const fileInput = document.getElementById('music-file-input');
+      const btn = document.getElementById('music-upload-btn');
+      if (!fileInput.files[0]) { showToast('❌ Sila pilih fail muzik dahulu', true); return; }
+      btn.disabled = true; btn.textContent = 'Memuat naik...';
+      try {
+        const formData = new FormData();
+        formData.append('music', fileInput.files[0]);
+        const res = await KJAuth.authFetch(`/api/my/template/${templateId}/music`, { method: 'POST', body: formData });
+        const json = await res.json();
+        if (json.success) { showToast('✅ ' + json.message); document.getElementById('music-current').textContent = '🎵 Muzik semasa: ' + json.musicUrl.split('/').pop(); fileInput.value = ''; }
+        else showToast('❌ ' + json.error, true);
+      } catch (err) { showToast('❌ Ralat memuat naik: ' + err.message, true); }
+      btn.disabled = false; btn.textContent = '🎵 Muat Naik';
+    }
+    window.uploadMusic = uploadMusic;
+
+    async function uploadGiftQr() {
+      const fileInput = document.getElementById('gift-qr-file-input');
+      const btn = document.getElementById('gift-qr-upload-btn');
+      if (!fileInput.files[0]) { showToast('❌ Sila pilih fail imej dahulu', true); return; }
+      btn.disabled = true; btn.textContent = 'Memuat naik...';
+      try {
+        const formData = new FormData();
+        formData.append('qr', fileInput.files[0]);
+        const res = await KJAuth.authFetch(`/api/my/template/${templateId}/gift-qr`, { method: 'POST', body: formData });
+        const json = await res.json();
+        if (json.success) { showToast('✅ ' + json.message); currentGiftQrUrl = json.qrUrl; document.getElementById('gift-qr-current').textContent = '🖼 QR semasa: ' + json.qrUrl.split('/').pop(); fileInput.value = ''; }
+        else showToast('❌ ' + json.error, true);
+      } catch (err) { showToast('❌ Ralat memuat naik: ' + err.message, true); }
+      btn.disabled = false; btn.textContent = '🖼 Muat Naik';
+    }
+    window.uploadGiftQr = uploadGiftQr;
+
+    function switchTab(name, btn) {
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('tab-' + name).classList.add('active');
+      btn.classList.add('active');
+    }
+    window.switchTab = switchTab;
+
+    function toggleDeceased(el, fieldId) {
+      const field = document.getElementById(fieldId);
+      if (field) field.style.display = el.checked ? 'block' : 'none';
+    }
+    window.toggleDeceased = toggleDeceased;
+
+    async function saveTemplate(e) {
+      e.preventDefault();
+      const btn = document.getElementById('save-btn');
+      btn.disabled = true; btn.textContent = 'Menyimpan...';
+
+      const form = document.getElementById('editor-form');
+      const data = {};
+      const formData = new FormData(form);
+      for (const [k, v] of formData.entries()) data[k] = v;
+
+      if (typeof data.MAJLIS_ADDRESS === 'string') data.MAJLIS_ADDRESS = data.MAJLIS_ADDRESS.replace(/\r\n|\r|\n/g, '<br/>');
+      if (typeof data.GIFT_ADDRESS === 'string') data.GIFT_ADDRESS = data.GIFT_ADDRESS.replace(/\r\n|\r|\n/g, '<br/>');
+
+      ['GROOM_DAD_DECEASED','GROOM_MOM_DECEASED','BRIDE_DAD_DECEASED','BRIDE_MOM_DECEASED','MUSIC_ENABLED','GIFT_ENABLED','PREWEDDING_ENABLED'].forEach(name => {
+        const el = form.elements[name];
+        if (el) data[name] = el.checked ? 'true' : 'false';
+      });
+
+      data.SCHEDULE = aturcaraData;
+      data.CONTACTS = kenalanData;
+      data.GIFT_ITEMS = giftItemsData;
+
+      try {
+        const res = await KJAuth.authFetch(`/api/my/template/${templateId}/save`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+        const json = await res.json();
+        if (json.success) showToast('✅ ' + json.message);
+        else showToast('❌ ' + json.error, true);
+      } catch (err) { showToast('❌ Ralat menyimpan: ' + err.message, true); }
+
+      btn.disabled = false; btn.textContent = '💾 Simpan Perubahan';
+    }
+    window.saveTemplate = saveTemplate;
+
+    function showToast(msg, isError) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = 'toast' + (isError ? ' error' : '');
+      setTimeout(() => t.classList.add('show'), 10);
+      setTimeout(() => t.classList.remove('show'), 3500);
+    }
+  </script>
+</body>
+</html>
