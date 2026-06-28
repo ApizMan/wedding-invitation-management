@@ -34,6 +34,18 @@ Sistem SaaS kad jemputan digital (wedding/aqiqah/birthday/corporate) dengan:
 - `frontend/shared/auth-client.js` — helper client-side `KJAuth` (token storage, `authFetch`, `logout`) dikongsi semua page admin & customer.
 - `src/backend/routes/` — `admin.routes.ts`, `customer.routes.ts`, `api.routes.ts`, `public.routes.ts`.
 - `src/services/` — business logic (template, package, slug, upload, audio, theme).
+- `functions/` — Cloud Functions wrapper untuk deploy ke Firebase Hosting (kod backend sebenar tetap di `src/`, TIADA duplication). `functions/src/index.ts` import `app` dari `src/backend/server.ts` dan bungkus dengan `onRequest()`. `functions/copy-assets.js` salin `frontend/` & `public/` ke `functions/lib/` semasa build supaya path `__dirname`-relatif dalam kod backend (cari fail HTML/assets) tetap resolve betul dalam Cloud Functions.
+
+### Deploy ke Firebase Hosting + Cloud Functions
+
+1. `src/backend/server.ts` export Express `app` (guna `if (require.main === module)` supaya `app.listen()` hanya jalan bila server.ts dijalankan terus — local dev via `npm run dev`/`npm start` — bukan bila di-import oleh Cloud Function).
+2. **PENTING**: Env var custom (`SERVICE_ACCOUNT_PATH`, `STORAGE_BUCKET_NAME` dalam `.env`) TIDAK boleh guna prefix `FIREBASE_`/`X_GOOGLE_`/`EXT_` — prefix ini reserved oleh platform Firebase Functions dan akan buat function gagal load (`Failed to load environment variables from .env`).
+3. `functions/.env` perlu disalin manual dari `.env` root (TIDAK auto-sync) — emulator/Cloud Functions baca env dari `functions/.env`, bukan root `.env`. Value dengan spasi (cth path Windows) perlu di-quote (`KEY="C:\path with space"`).
+4. Sebelum deploy, jalankan `cd functions && npm run build` (compile TypeScript + copy assets) dan test dengan `firebase emulators:start --only functions,hosting`.
+5. `firebase deploy --only hosting,functions` untuk deploy sebenar — perlukan Firebase plan **Blaze** (pay-as-you-go).
+6. **PENTING (production)**: `functions/src/index.ts` `onRequest()` MESTI pass `{ invoker: 'public' }` — tanpa ni Cloud Run v2 return 403 Forbidden untuk semua request via Hosting rewrite (project policy tak auto-grant `allUsers` invoker lagi).
+7. **PENTING (production)**: `src/database/firebase.ts` detect Cloud Functions runtime via env var `K_SERVICE` (auto-disuntik platform) — bila wujud, `initializeApp()` dipanggil TANPA `credential: cert(...)` supaya guna Application Default Credentials automatik. JANGAN cuba baca `SERVICE_ACCOUNT_PATH` dalam Cloud Functions — path fail lokal (laptop dev) tak wujud di server, akan crash function dengan `ENOENT`.
+8. Domain custom (`kadjemputan.com`) disambung selepas deploy via Firebase Console → Hosting → Add custom domain (perlu DNS records di registrar domain — tindakan luar repo).
 
 ## Rujukan Route Penuh
 
@@ -63,10 +75,13 @@ Sistem SaaS kad jemputan digital (wedding/aqiqah/birthday/corporate) dengan:
 | `/w/:weddingId` | GET | tiada | Render wedding by Firestore doc ID |
 | `/:slug` | GET | tiada | Render wedding by custom slug (catch-all, mesti last) |
 | `/api/rsvp` | POST | tiada | Submit kehadiran (RSVP) |
+| `/api/contact` | POST | tiada | Submit borang Hubungi Kami (hantar email + Telegram via [src/services/notify.service.ts](src/services/notify.service.ts)) |
 | `/api/wish` | POST | tiada | Submit ucapan |
 | `/api/wishes/:templateId` | GET | tiada | Senarai ucapan (live refresh) |
 | `/api/template/:id/gift-items` | GET | tiada | Senarai barang hadiah |
 | `/api/template/:id/gift-item/:itemId/reserve` | POST | tiada | Tempah barang hadiah (tetamu) |
+| `/api/template-previews` | GET | tiada | Senarai imej preview template (scan `public/assets/templates/`), untuk shuffle hero landing page |
+| `/api/design-counts` | GET | tiada | Bilangan design siap setiap kategori (dari `TEMPLATES_META`), untuk seksyen Kategori landing page |
 
 ### Admin (`src/backend/routes/admin.routes.ts` + `api.routes.ts`)
 | Route | Method | Auth | Keterangan |
@@ -97,6 +112,25 @@ Sistem SaaS kad jemputan digital (wedding/aqiqah/birthday/corporate) dengan:
 
 Selepas setiap tugasan selesai, tambah SATU baris ringkas di bawah (format: `- YYYY-MM-DD: <ringkasan 1 ayat>`). Jangan tulis ringkasan panjang/perenggan di sini — tujuannya supaya sesi akan datang nampak sejarah perubahan besar dengan pantas. Letak entri terbaru di ATAS.
 
+- 2026-06-28: **Deploy pertama berjaya** ke `https://kadjemputan.web.app` (semua route /, /catalog, /api/*, /template_1, /admin/login disahkan 200 live). Dua isu production dibetulkan: (1) `src/database/firebase.ts` cuma load service account JSON dari fail path bila BUKAN Cloud Functions — dikesan via env var `K_SERVICE` (disuntik platform); dalam Cloud Functions guna `initializeApp()` tanpa credential supaya automatik pakai Application Default Credentials (fail path local tak wujud di server). (2) `functions/src/index.ts` `onRequest()` perlu `{ invoker: 'public' }` secara explicit — tanpa ni Cloud Run v2 function return 403 Forbidden bila diakses melalui Hosting rewrite (org policy terkini tak auto-grant `allUsers` invoker).
+
+- 2026-06-28: Tambah Hosting site baharu `kadjemputan` (URL default `kadjemputan.web.app`) dalam project Firebase sedia ada (`wedd-inv-mangement` — Project ID tak ditukar, hanya Hosting site name); `firebase.json` `hosting.target` diset ke `kadjemputan`, `.firebaserc` ada mapping target. Site lama `wedd-inv-mangement.web.app` masih wujud tapi tak digunakan dalam deploy.
+
+- 2026-06-28: Setup deploy Firebase Hosting + Cloud Functions (folder `functions/` baharu, wrap Express `app` dari `src/backend/server.ts` dengan `onRequest()`, `firebase.json` rewrite semua route ke function); rename env var `FIREBASE_SERVICE_ACCOUNT_PATH`/`FIREBASE_STORAGE_BUCKET` kepada `SERVICE_ACCOUNT_PATH`/`STORAGE_BUCKET_NAME` (prefix `FIREBASE_` reserved oleh platform Functions); buang placeholder `public/index.html`/`404.html` dari wizard `firebase init`. Disahkan berfungsi end-to-end via `firebase emulators:start` (semua route /, /catalog, /api/*, /admin/login, /template_1 return 200). Belum deploy sebenar — user belum upgrade Blaze plan & belum daftar domain kadjemputan.com.
+
+- 2026-06-28: Tambah `/api/design-counts` (public.routes.ts) yang kira design siap mengikut kategori dari `TEMPLATES_META`; seksyen Kategori di landing page kini papar count sebenar (bukan hardcode 15/8/10/7).
+
+- 2026-06-28: Kad hero shuffle di landing.html kini papar imej template sahaja (buang teks "Walimatul Urus"/"Ahmad & Aisyah"/dll); tukar label nav "Homepage" (BM) kepada "Halaman Utama" di semua page marketing (EN kekal "Homepage").
+
+- 2026-06-28: Tambah endpoint `/api/template-previews` (public.routes.ts) yang scan `public/assets/templates/` secara dinamik; kad "WALIMATUL URUS" di hero landing page kini fade/shuffle automatik antara semua imej preview template setiap 4 saat.
+
+- 2026-06-28: Tambah `/api/contact` (public.routes.ts) + [src/services/notify.service.ts](src/services/notify.service.ts) — borang Hubungi Kami kini hantar email (Gmail SMTP via nodemailer) & notifikasi Telegram bot. Tambah `<script auth-client.js>` yang hilang di package/faq/contact.html (punca butang Login/Register tak bertukar selepas log masuk); butang "Pilih Bronze/Platinum/Gold" di /package kini ke /catalog bila pengguna sudah log masuk. Kredensial GMAIL_USER/GMAIL_APP_PASSWORD/TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID disimpan di .env (gitignored).
+- 2026-06-28: Tambah field `code`/`category` pada `TEMPLATES_META` (cth WED001 untuk Klasik Emerald); dedahkan sebagai `designCode` di `/api/templates`, `/api/admin/customers`, `/api/my/templates` dan papar di katalog/admin dashboard/customer dashboard; buang description ringkas ("Forest Green & Gold...") daripada kad katalog.
+- 2026-06-28: Betulkan bug admin editor — pisahkan tab "Lokasi & Hadiah" jadi tab "Lokasi" (sentiasa ada, MAP_ADDRESS) & "Hadiah" (gated Gold); paksa `*_ENABLED=false` di saveTemplate() bila pakej tiada feature, supaya validasi/tab gated tak terbuka semula untuk Bronze/Platinum.
+- 2026-06-28: Tambah package gating di admin editor (sama corak macam customer editor) — sembunyikan tab Pre-Wedding/Muzik/Hadiah dan field-group URL Custom ikut pakej wedding (`applyPackageGating()`).
+- 2026-06-28: Buang bahagian "Design Kad Jemputan" (pertukaran design) dari admin editor; sembunyikan butang "Senarai Tetamu" di admin editor untuk pakej Bronze.
+- 2026-06-28: Tambah `isWeddingComplete()` di package.service.ts dan field `complete` pada `/api/admin/customers`; sembunyikan butang Pratonton di admin dashboard untuk kad yang belum lengkap (padan dengan logik sekat Pratonton di editor).
+- 2026-06-28: Sekat butang Pratonton (admin & customer editor) sehingga semua field text/textarea diisi, tukar label nav "Landing Page" kepada "Homepage", dan ubah suai katalog (search input penuh, filter di kiri, grid 5 lajur dengan search+filter berfungsi).
 - 2026-06-28: Tambah harga pakej (Bronze RM30/Platinum RM35/Gold RM50), susun semula gating ciri (RSVP & Ucapan kini gated mulai Platinum), tambah statistik jualan & hasil di admin dashboard.
 - 2026-06-28: Tukar auth daripada cookie session kepada Firebase ID Token (Bearer) penuh — buang `express-session`, tambah `KJAuth` client helper, semua page jadi unauthenticated shell dengan proteksi di layer API.
 - 2026-06-28: Cipta CLAUDE.md; buang butang "Cipta Wedding Baru" dari admin dashboard.

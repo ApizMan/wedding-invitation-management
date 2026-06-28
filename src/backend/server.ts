@@ -6,15 +6,20 @@ import { publicRouter } from './routes/public.routes';
 import { adminRouter } from './routes/admin.routes';
 import { apiRouter } from './routes/api.routes';
 import { customerRouter } from './routes/customer.routes';
+import { UploadedFile } from '../services/multipart.util';
 
 type AuthUser = { uid: string; email: string; name: string; role: 'admin' | 'customer' };
 
 // Auth is token-based (Firebase ID token via `Authorization: Bearer <token>`) — there is no
 // server-side session. `req.authUser` is populated per-request by the auth middleware.
+// `req.file` is populated by the busboy-based upload middleware (`singleFileUpload`, see
+// services/multipart.util.ts) — not multer, which doesn't survive Cloud Functions' buffered
+// `rawBody` request stream.
 declare global {
   namespace Express {
     interface Request {
       authUser?: AuthUser;
+      file?: UploadedFile;
     }
   }
 }
@@ -55,14 +60,18 @@ app.use(customerRouter);
 app.use(apiRouter);
 app.use(publicRouter); // includes catch-all /:slug — must be mounted last
 
-// ── Start ──
-app.listen(PORT, () => {
-  console.log('\n╔════════════════════════════════════════════════╗');
-  console.log('║     RSVP Wedding System — Server Berjalan       ║');
-  console.log('╠════════════════════════════════════════════════╣');
-  console.log(`║  Landing  : http://localhost:${PORT}/              ║`);
-  console.log(`║  Template : http://localhost:${PORT}/template_1    ║`);
-  console.log(`║  Customer : http://localhost:${PORT}/profile        ║`);
-  console.log(`║  Admin    : http://localhost:${PORT}/admin/login    ║`);
-  console.log('╚════════════════════════════════════════════════╝\n');
-});
+// ── Start (local dev only — Cloud Functions imports `app` directly without listening) ──
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log('\n╔════════════════════════════════════════════════╗');
+    console.log('║     RSVP Wedding System — Server Berjalan       ║');
+    console.log('╠════════════════════════════════════════════════╣');
+    console.log(`║  Landing  : http://localhost:${PORT}/              ║`);
+    console.log(`║  Template : http://localhost:${PORT}/template_1    ║`);
+    console.log(`║  Customer : http://localhost:${PORT}/profile        ║`);
+    console.log(`║  Admin    : http://localhost:${PORT}/admin/login    ║`);
+    console.log('╚════════════════════════════════════════════════╝\n');
+  });
+}
+
+export default app;

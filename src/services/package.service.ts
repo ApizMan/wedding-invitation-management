@@ -49,3 +49,48 @@ export function sanitizeSaveByPackage(pkg: PackageTier, body: Record<string, unk
   }
   return sanitized;
 }
+
+// Text/textarea fields always visible in the editor regardless of package or deceased toggles.
+const BASE_REQUIRED_FIELDS = [
+  'GROOM_NAME', 'GROOM_BIN', 'BRIDE_NAME', 'BRIDE_BINTI', 'GROOM_FULL', 'BRIDE_FULL',
+  'PAGE_TITLE', 'NOTICE_TEXT',
+  'EVENT_LOCATION',
+  'AKAD_LOCATION_NAME', 'AKAD_LOCATION_DETAIL',
+  'MAJLIS_HALL', 'MAJLIS_SUBLOC', 'MAJLIS_ADDRESS',
+  'MAP_ADDRESS',
+  'GROOM_DAD', 'GROOM_MOM', 'GROOM_WALI',
+  'BRIDE_DAD', 'BRIDE_MOM', 'BRIDE_WALI',
+];
+
+// Fields only required when their deceased toggle is checked.
+const DECEASED_DUA_FIELDS: [string, string][] = [
+  ['GROOM_DAD_DECEASED', 'GROOM_DAD_DUA'],
+  ['GROOM_MOM_DECEASED', 'GROOM_MOM_DUA'],
+  ['BRIDE_DAD_DECEASED', 'BRIDE_DAD_DUA'],
+  ['BRIDE_MOM_DECEASED', 'BRIDE_MOM_DUA'],
+];
+
+// Text/textarea fields gated behind a package feature — only required when the wedding's package has that feature.
+const FEATURE_REQUIRED_FIELDS: Partial<Record<PackageFeature, string[]>> = {
+  GIFT: ['GIFT_BANK_NAME', 'GIFT_BANK_ACCOUNT', 'GIFT_ACCOUNT_NAME', 'GIFT_ADDRESS'],
+};
+
+function isFilled(value: unknown): boolean {
+  return typeof value === 'string' ? value.trim() !== '' : value !== undefined && value !== null && value !== '';
+}
+
+// Mirrors the customer/admin editor's "Pratonton" gate: true only when every text/textarea field
+// visible for this wedding's package (and deceased-toggle state) has a non-empty value.
+export function isWeddingComplete(pkg: PackageTier, data: Record<string, unknown>): boolean {
+  const requiredFields = [...BASE_REQUIRED_FIELDS];
+
+  DECEASED_DUA_FIELDS.forEach(([toggleField, duaField]) => {
+    if (data[toggleField] === 'true' || data[toggleField] === true) requiredFields.push(duaField);
+  });
+
+  (Object.keys(FEATURE_REQUIRED_FIELDS) as PackageFeature[]).forEach(feature => {
+    if (hasFeature(pkg, feature)) requiredFields.push(...(FEATURE_REQUIRED_FIELDS[feature] || []));
+  });
+
+  return requiredFields.every(field => isFilled(data[field]));
+}

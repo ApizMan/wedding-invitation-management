@@ -1,0 +1,15 @@
+{
+  "projects": {
+    "default": "wedd-inv-mangement"
+  },
+  "targets": {
+    "wedd-inv-mangement": {
+      "hosting": {
+        "kadjemputan": [
+          "kadjemputan"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}

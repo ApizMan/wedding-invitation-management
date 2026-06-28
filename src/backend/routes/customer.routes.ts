@@ -1,11 +1,12 @@
 import path from 'path';
 import { Router, Request, Response } from 'express';
 import { auth, db, bucket } from '../../database/firebase';
-import { requireCustomer } from '../middleware/auth.middleware';
-import { createWedding, getConfig } from '../../services/template.service';
+import { requireCustomer, requireOwnership } from '../middleware/auth.middleware';
+import { createWedding, getConfig, saveTemplate } from '../../services/template.service';
 import { TEMPLATES_META, DEFAULT_DESIGN_ID } from '../../services/template.types';
-import { resolvePackage } from '../../services/package.service';
+import { hasFeature, resolvePackage } from '../../services/package.service';
 import { uploadImage, compressImage } from '../../services/upload.service';
+import { sendPurchaseTelegram, sendPurchaseEmail, sendReceiptReuploadTelegram, sendReceiptReuploadEmail } from '../../services/notify.service';
 
 const FRONTEND_CUSTOMER_DIR = path.join(__dirname, '..', '..', '..', 'frontend', 'customer');
 
@@ -63,6 +64,7 @@ customerRouter.post('/login', async (req: Request, res: Response) => {
 // ── My Dashboard / Editor (unauthenticated page shell — client JS handles the auth check) ──
 customerRouter.get('/my/dashboard', (req: Request, res: Response) => res.sendFile(path.join(FRONTEND_CUSTOMER_DIR, 'dashboard.html')));
 customerRouter.get('/my/template/:id/edit', (req: Request, res: Response) => res.sendFile(path.join(FRONTEND_CUSTOMER_DIR, 'editor.html')));
+customerRouter.get('/my/template/:id/guests', (req: Request, res: Response) => res.sendFile(path.join(FRONTEND_CUSTOMER_DIR, 'guests.html')));
 
 customerRouter.get('/api/my/templates', requireCustomer, async (req: Request, res: Response) => {
   try {
@@ -70,17 +72,83 @@ customerRouter.get('/api/my/templates', requireCustomer, async (req: Request, re
     const config = await getConfig();
     const list = Object.entries(config)
       .filter(([, w]: [string, any]) => w.OWNER_UID === uid)
-      .map(([id, w]: [string, any]) => ({
-        id,
-        name: w.name || 'Kad Jemputan Saya',
-        package: resolvePackage(w.PACKAGE),
-        purchaseStatus: w.PURCHASE_STATUS || 'pending',
-        groomName: w.GROOM_NAME || '',
-        brideName: w.BRIDE_NAME || '',
-        slug: w.SLUG || '',
-        preview: w.SLUG ? `/${w.SLUG}` : `/w/${id}`,
-      }));
+      .map(([id, w]: [string, any]) => {
+        const designId = w.DESIGN_ID && TEMPLATES_META[w.DESIGN_ID] ? w.DESIGN_ID : DEFAULT_DESIGN_ID;
+        return {
+          id,
+          name: w.name || 'Kad Jemputan Saya',
+          package: resolvePackage(w.PACKAGE),
+          purchaseStatus: w.PURCHASE_STATUS || 'pending',
+          groomName: w.GROOM_NAME || '',
+          brideName: w.BRIDE_NAME || '',
+          slug: w.SLUG || '',
+          preview: w.SLUG ? `/${w.SLUG}` : `/w/${id}`,
+          receiptUrl: w.RECEIPT_URL || '',
+          designCode: TEMPLATES_META[designId]?.code || '',
+        };
+      });
     res.json(list);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── RSVP/wishes list for the customer's own template (Platinum & Gold only) ──
+customerRouter.get('/api/my/template/:id/rsvps', requireCustomer, requireOwnership, async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id as string;
+    const config = await getConfig();
+    if (!config[id]) return res.status(404).json({ error: 'Template tidak dijumpai' });
+    const pkg = resolvePackage(config[id].PACKAGE);
+    if (!hasFeature(pkg, 'RSVP')) {
+      return res.status(403).json({ error: 'Pakej anda tidak termasuk RSVP & Senarai Tetamu.' });
+    }
+    const snapshot = await db.collection('rsvps').where('templateId', '==', id).get();
+    const entries = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+      .sort((a: any, b: any) => String(b.submittedAt).localeCompare(String(a.submittedAt)));
+    res.json(entries);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Re-upload payment receipt for a pending purchase (e.g. wrong file, clearer photo) ──
+customerRouter.post('/api/my/template/:id/receipt', requireCustomer, requireOwnership, uploadImage.single('receipt'), async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id as string;
+    const config = await getConfig();
+    if (!config[id]) return res.status(404).json({ error: 'Template tidak dijumpai' });
+    if (config[id].PURCHASE_STATUS === 'active') {
+      return res.status(400).json({ error: 'Pembelian ini telah disahkan, resit tidak boleh ditukar lagi.' });
+    }
+    if (!req.file) {
+      return res.status(400).json({ error: 'Sila muat naik gambar resit pembayaran.' });
+    }
+
+    const wasRejected = config[id].PURCHASE_STATUS === 'rejected';
+
+    const { buffer, contentType } = await compressImage(req.file.buffer);
+    const storagePath = `receipts/${req.authUser!.uid}/${id}_${Date.now()}.jpg`;
+    const fileRef = bucket.file(storagePath);
+    await fileRef.save(buffer, { contentType });
+    await fileRef.makePublic();
+    const receiptUrl = `https://storage.googleapis.com/${bucket.name}/${storagePath}`;
+
+    await saveTemplate(id, { RECEIPT_URL: receiptUrl, PURCHASE_STATUS: 'pending' });
+
+    if (wasRejected) {
+      const reuploadNotice = {
+        customerName: req.authUser!.name,
+        customerEmail: req.authUser!.email,
+        weddingName: config[id].name || 'Kad Jemputan Saya',
+        pkg: resolvePackage(config[id].PACKAGE),
+        receiptUrl,
+      };
+      sendReceiptReuploadTelegram(reuploadNotice).catch(err => console.error('Gagal hantar notify Telegram (Re-upload resit):', err));
+      sendReceiptReuploadEmail(reuploadNotice).catch(err => console.error('Gagal hantar email (Re-upload resit):', err));
+    }
+
+    res.json({ success: true, message: 'Resit pembayaran dikemas kini! Sila tunggu pengesahan admin.', receiptUrl });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -115,6 +183,18 @@ customerRouter.post('/api/my/checkout', requireCustomer, uploadImage.single('rec
       PURCHASE_STATUS: 'pending',
       RECEIPT_URL: receiptUrl,
     });
+
+    const purchaseNotice = {
+      customerName: req.authUser!.name,
+      customerEmail: req.authUser!.email,
+      weddingName: 'Kad Jemputan Saya',
+      designName: TEMPLATES_META[finalDesignId]?.name || finalDesignId,
+      pkg,
+      receiptUrl,
+    };
+    sendPurchaseTelegram(purchaseNotice).catch(err => console.error('Gagal hantar notify Telegram (Purchase):', err));
+    sendPurchaseEmail(purchaseNotice).catch(err => console.error('Gagal hantar email (Purchase):', err));
+
     res.json({ success: true, id, message: 'Tempahan diterima! Sila tunggu pengesahan admin selepas pembayaran.' });
   } catch (err: any) {
     res.status(500).json({ error: err.message });

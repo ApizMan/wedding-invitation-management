@@ -5,10 +5,14 @@ export interface TemplateMeta {
   name: string;
   theme: string;
   preview: string;
+  code: string;
+  category: 'wedding' | 'aqiqah' | 'birthday' | 'corporate';
 }
 
+// `code` follows category prefix + running number (WED001, AQ001, BYD001, COR001) — shown to
+// admin/customer alongside the design name so support requests can reference a stable identifier.
 export const TEMPLATES_META: Record<string, TemplateMeta> = {
-  template_1: { id: 'template_1', name: 'Klasik Emerald', theme: 'Hijau Hutan & Emas', preview: '/template_1' },
+  template_1: { id: 'template_1', name: 'Klasik Emerald', theme: 'Hijau Hutan & Emas', preview: '/template_1', code: 'WED001', category: 'wedding' },
 };
 
 export const DEFAULT_DESIGN_ID = 'template_1';

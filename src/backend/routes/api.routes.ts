@@ -1,12 +1,13 @@
 import { Router, Request, Response } from 'express';
 import { db, bucket } from '../../database/firebase';
 import { requireAdmin, requireCustomer, requireOwnership } from '../middleware/auth.middleware';
-import { getConfig, saveTemplate, createWedding } from '../../services/template.service';
+import { getConfig, saveTemplate, createWedding, deleteTemplate } from '../../services/template.service';
 import { isValidSlug, findTemplateBySlug } from '../../services/slug.service';
 import { upload, compressAudio } from '../../services/audio.service';
 import { uploadImage, compressImage } from '../../services/upload.service';
 import { TEMPLATES_META, DEFAULT_DESIGN_ID } from '../../services/template.types';
-import { hasFeature, resolvePackage, sanitizeSaveByPackage, PACKAGE_PRICES } from '../../services/package.service';
+import { hasFeature, resolvePackage, sanitizeSaveByPackage, isWeddingComplete, PACKAGE_PRICES } from '../../services/package.service';
+import { sendPurchaseStatusEmail } from '../../services/notify.service';
 
 export const apiRouter = Router();
 
@@ -24,6 +25,7 @@ apiRouter.get('/api/templates', requireAdmin, async (req: Request, res: Response
       theme: TEMPLATES_META[designId]?.theme || '',
       designId,
       designName: TEMPLATES_META[designId]?.name || 'Design Tidak Sah',
+      designCode: TEMPLATES_META[designId]?.code || '',
       groomName: w.GROOM_NAME || '',
       brideName: w.BRIDE_NAME || '',
       date: w.EVENT_DATE_SHORT || '',
@@ -266,7 +268,7 @@ apiRouter.get('/api/template/:id/rsvps', requireAdmin, async (req: Request, res:
 // ── Admin: sales stats (revenue from active/approved purchases, by package) ──
 apiRouter.get('/api/admin/sales-stats', requireAdmin, async (req: Request, res: Response) => {
   const config = await getConfig();
-  const purchases = Object.values(config).filter((w: any) => !!w.OWNER_UID);
+  const purchases = Object.values(config).filter((w: any) => !!w.OWNER_UID && w.PURCHASE_STATUS !== 'rejected');
 
   const byPackage: Record<string, { count: number; revenue: number }> = {
     bronze: { count: 0, revenue: 0 },
@@ -285,7 +287,7 @@ apiRouter.get('/api/admin/sales-stats', requireAdmin, async (req: Request, res: 
       totalRevenue += PACKAGE_PRICES[pkg];
       byPackage[pkg].count += 1;
       byPackage[pkg].revenue += PACKAGE_PRICES[pkg];
-    } else {
+    } else if (status === 'pending') {
       totalPending += 1;
     }
   });
@@ -327,17 +329,22 @@ apiRouter.get('/api/admin/customers', requireAdmin, async (req: Request, res: Re
     Object.entries(config).forEach(([id, w]: [string, any]) => {
       if (!w.OWNER_UID) return;
       const list = weddingsByOwner.get(w.OWNER_UID) || [];
+      const designId = w.DESIGN_ID && TEMPLATES_META[w.DESIGN_ID] ? w.DESIGN_ID : DEFAULT_DESIGN_ID;
+      const pkg = resolvePackage(w.PACKAGE);
       list.push({
         id,
         name: w.name || 'Tanpa Nama',
-        package: resolvePackage(w.PACKAGE),
+        package: pkg,
         purchaseStatus: w.PURCHASE_STATUS || 'pending',
         groomName: w.GROOM_NAME || '',
         brideName: w.BRIDE_NAME || '',
-        designId: w.DESIGN_ID || DEFAULT_DESIGN_ID,
+        designId,
+        designName: TEMPLATES_META[designId]?.name || 'Design Tidak Sah',
+        designCode: TEMPLATES_META[designId]?.code || '',
         slug: w.SLUG || '',
         preview: w.SLUG ? `/${w.SLUG}` : `/w/${id}`,
         receiptUrl: w.RECEIPT_URL || '',
+        complete: isWeddingComplete(pkg, w),
       });
       weddingsByOwner.set(w.OWNER_UID, list);
     });
@@ -358,13 +365,52 @@ apiRouter.get('/api/admin/customers', requireAdmin, async (req: Request, res: Re
   }
 });
 
+async function notifyPurchaseStatus(wedding: any, status: 'active' | 'rejected') {
+  if (!wedding.OWNER_UID) return;
+  const userDoc = await db.collection('users').doc(wedding.OWNER_UID).get();
+  const customerEmail = userDoc.exists ? userDoc.data()?.email : '';
+  if (!customerEmail) return;
+  await sendPurchaseStatusEmail({
+    customerEmail,
+    weddingName: wedding.name || 'Kad Jemputan Saya',
+    pkg: resolvePackage(wedding.PACKAGE),
+    status,
+  });
+}
+
 apiRouter.post('/api/template/:id/approve', requireAdmin, async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
     const config = await getConfig();
     if (!config[id]) return res.status(404).json({ error: 'Template tidak dijumpai' });
     await saveTemplate(id, { PURCHASE_STATUS: 'active' });
+    notifyPurchaseStatus(config[id], 'active').catch(err => console.error('Gagal hantar email status pembelian:', err));
     res.json({ success: true, message: 'Pembelian disahkan. Pelanggan kini boleh mengedit kad mereka.' });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+apiRouter.post('/api/template/:id/reject', requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id as string;
+    const config = await getConfig();
+    if (!config[id]) return res.status(404).json({ error: 'Template tidak dijumpai' });
+    await saveTemplate(id, { PURCHASE_STATUS: 'rejected' });
+    notifyPurchaseStatus(config[id], 'rejected').catch(err => console.error('Gagal hantar email status pembelian:', err));
+    res.json({ success: true, message: 'Pembelian telah dibatalkan.' });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+apiRouter.post('/api/template/:id/delete', requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id as string;
+    const config = await getConfig();
+    if (!config[id]) return res.status(404).json({ error: 'Template tidak dijumpai' });
+    await deleteTemplate(id);
+    res.json({ success: true, message: 'Kad pelanggan telah dibuang.' });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

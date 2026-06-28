@@ -66,7 +66,7 @@
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="5" cy="4" r="2.2" stroke="currentColor" stroke-width="1.2"/><path d="M1 13c0-2.5 1.8-4.5 4-4.5s4 2 4 4.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="10.5" cy="5" r="1.6" stroke="currentColor" stroke-width="1.1"/><path d="M9 8.6c1.6.1 2.9 1.6 3 3.6" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
         Senarai Tetamu
       </a>
-      <a id="preview-btn" href="#" target="_blank" style="display:flex;align-items:center;gap:6px;color:#c9a84c;font-size:.8rem;text-decoration:none;border:1px solid rgba(201,168,76,.4);padding:7px 14px;border-radius:3px;transition:all .2s;" onmouseover="this.style.background='rgba(201,168,76,.1)'" onmouseout="this.style.background='transparent'">
+      <a id="preview-btn" href="#" target="_blank" style="display:flex;align-items:center;gap:6px;color:#c9a84c;font-size:.8rem;text-decoration:none;border:1px solid rgba(201,168,76,.4);padding:7px 14px;border-radius:3px;transition:all .2s;pointer-events:none;opacity:.4;cursor:not-allowed;" title="Lengkapkan semua maklumat dahulu untuk pratonton" onmouseover="this.style.background='rgba(201,168,76,.1)'" onmouseout="this.style.background='transparent'">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7C1 7 3.5 2 7 2C10.5 2 13 7 13 7C13 7 10.5 12 7 12C3.5 12 1 7 1 7Z" stroke="currentColor" stroke-width="1.3"/><circle cx="7" cy="7" r="2" stroke="currentColor" stroke-width="1.3"/></svg>
         Pratonton
       </a>
@@ -90,7 +90,7 @@
     </div>
 
     <!-- URL Custom -->
-    <div class="field-group">
+    <div class="field-group" id="field-group-slug" style="display:none;">
       <h3>URL Custom</h3>
       <div class="input-btn-row">
         <div>
@@ -103,30 +103,18 @@
       <p class="field-hint">Huruf kecil, nombor, dan tanda sengkang (-) sahaja. Biarkan kosong untuk guna URL lalai (/template_1).</p>
     </div>
 
-    <!-- Design Kad Jemputan -->
-    <div class="field-group">
-      <h3>Design Kad Jemputan</h3>
-      <div class="input-btn-row">
-        <div>
-          <label>Pilih Design</label>
-          <select id="design-select"></select>
-        </div>
-        <button type="button" class="btn-save" id="design-btn" onclick="saveDesign()">🎨 Tukar Design</button>
-      </div>
-      <p class="field-hint">Data (nama, jadual, keluarga, dll.) kekal sama walau design ditukar.</p>
-    </div>
-
     <!-- Tabs -->
     <div style="display:flex;border-bottom:1px solid rgba(201,168,76,.15);margin-bottom:28px;overflow-x:auto;gap:0;">
       <button class="tab-btn active" onclick="switchTab('pengantin',this)">👫 Pengantin</button>
       <button class="tab-btn" onclick="switchTab('acara',this)">📍 Tarikh &amp; Lokasi</button>
       <button class="tab-btn" onclick="switchTab('aturcara',this)">🕐 Aturcara</button>
-      <button class="tab-btn" onclick="switchTab('prewedding',this)">📷 Pre-Wedding</button>
+      <button class="tab-btn" id="tab-btn-prewedding" onclick="switchTab('prewedding',this)" style="display:none;">📷 Pre-Wedding</button>
       <button class="tab-btn" onclick="switchTab('keluarga',this)">👨‍👩‍👧 Keluarga</button>
       <button class="tab-btn" onclick="switchTab('kenalan',this)">📞 Kenalan</button>
       <button class="tab-btn" onclick="switchTab('tema',this)">🎨 Tema</button>
-      <button class="tab-btn" onclick="switchTab('muzik',this)">🎵 Muzik</button>
-      <button class="tab-btn" onclick="switchTab('hadiah',this)">🎁 Lokasi &amp; Hadiah</button>
+      <button class="tab-btn" id="tab-btn-muzik" onclick="switchTab('muzik',this)" style="display:none;">🎵 Muzik</button>
+      <button class="tab-btn" onclick="switchTab('lokasi',this)">📍 Lokasi</button>
+      <button class="tab-btn" id="tab-btn-hadiah" onclick="switchTab('hadiah',this)" style="display:none;">🎁 Hadiah</button>
     </div>
 
     <form id="editor-form" onsubmit="saveTemplate(event)">
@@ -490,12 +478,15 @@ Ampang Jaya, Selangor"></textarea>
         </div>
       </div>
 
-      <div class="tab-panel" id="tab-hadiah">
+      <div class="tab-panel" id="tab-lokasi">
         <div class="field-group">
           <h3>Lokasi (Map)</h3>
           <div><label>Alamat Majlis untuk Navigasi</label><input type="text" name="MAP_ADDRESS" placeholder="Dewan Serbaguna Bahagia, Jalan Bahagia 5, 68000 Ampang, Selangor"></div>
           <p class="field-hint">Tetamu akan dibawa terus ke Google Maps / Waze menggunakan alamat ini. Pastikan alamat lengkap dan tepat.</p>
         </div>
+      </div>
+
+      <div class="tab-panel" id="tab-hadiah">
         <div class="field-group">
           <h3>Hadiah Pengantin</h3>
           <div style="margin-bottom:18px;">
@@ -537,7 +528,7 @@ Ampang Jaya, Selangor"></textarea>
       <div style="position:sticky;bottom:0;background:rgba(15,30,23,.95);border-top:1px solid rgba(201,168,76,.2);padding:16px 0;margin-top:28px;display:flex;align-items:center;justify-content:space-between;backdrop-filter:blur(8px);">
         <span id="save-status" style="color:rgba(201,168,76,.5);font-size:.82rem;"></span>
         <div style="display:flex;gap:12px;">
-          <a id="footer-preview" href="#" target="_blank" style="padding:12px 24px;border:1px solid rgba(201,168,76,.4);border-radius:3px;color:#c9a84c;font-size:.82rem;text-decoration:none;letter-spacing:.1em;text-transform:uppercase;transition:background .2s;" onmouseover="this.style.background='rgba(201,168,76,.1)'" onmouseout="this.style.background='transparent'">
+          <a id="footer-preview" href="#" target="_blank" style="padding:12px 24px;border:1px solid rgba(201,168,76,.4);border-radius:3px;color:#c9a84c;font-size:.82rem;text-decoration:none;letter-spacing:.1em;text-transform:uppercase;transition:background .2s;pointer-events:none;opacity:.4;cursor:not-allowed;" title="Lengkapkan semua maklumat dahulu untuk pratonton" onmouseover="this.style.background='rgba(201,168,76,.1)'" onmouseout="this.style.background='transparent'">
             👁 Pratonton
           </a>
           <button type="submit" class="btn-save" id="save-btn">💾 Simpan Perubahan</button>
@@ -560,6 +551,7 @@ Ampang Jaya, Selangor"></textarea>
     let giftItemsData = [];
     let currentGiftQrUrl = '';
     let preweddingPhotos = [];
+    let currentPkg = 'gold';
 
     const DEFAULT_COLORS = {
       COLOR_GOLD: '#c9a84c', COLOR_GOLD_LIGHT: '#e8d5a3', COLOR_GOLD_DARK: '#8b6914',
@@ -570,6 +562,42 @@ Ampang Jaya, Selangor"></textarea>
     // Set preview links
     document.getElementById('preview-btn').href    = `/${templateId}`;
     document.getElementById('footer-preview').href = `/${templateId}`;
+
+    function updatePreviewBtnState() {
+      const form = document.getElementById('editor-form');
+      const requiredEls = Array.from(form.querySelectorAll('input[type=text], input[type=tel], textarea'))
+        .filter(el => el.offsetParent !== null && !el.closest('#gift-items-list') && !el.closest('#aturcara-list') && !el.closest('#kenalan-list'));
+      const allFilled = requiredEls.every(el => el.value.trim() !== '');
+      [document.getElementById('preview-btn'), document.getElementById('footer-preview')].forEach(btn => {
+        btn.style.pointerEvents = allFilled ? '' : 'none';
+        btn.style.opacity = allFilled ? '' : '.4';
+        btn.style.cursor = allFilled ? '' : 'not-allowed';
+        btn.title = allFilled ? '' : 'Lengkapkan semua maklumat dahulu untuk pratonton';
+      });
+    }
+    document.getElementById('editor-form').addEventListener('input', updatePreviewBtnState);
+
+    const FEATURE_TABS = {
+      PREWEDDING: ['tab-btn-prewedding'],
+      MUSIC: ['tab-btn-muzik'],
+      GIFT: ['tab-btn-hadiah'],
+      CUSTOM_SLUG: ['field-group-slug'],
+    };
+    const PACKAGE_FEATURES = {
+      bronze: [],
+      platinum: ['RSVP', 'WISHES', 'CUSTOM_SLUG'],
+      gold: ['RSVP', 'WISHES', 'CUSTOM_SLUG', 'MUSIC', 'PREWEDDING', 'GIFT'],
+    };
+    function applyPackageGating(pkg) {
+      const allowed = PACKAGE_FEATURES[pkg] || [];
+      Object.entries(FEATURE_TABS).forEach(([feature, ids]) => {
+        const show = allowed.includes(feature);
+        ids.forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.style.display = show ? '' : 'none';
+        });
+      });
+    }
 
     // Sync color <-> text pair inputs
     document.querySelectorAll('input[type=color]').forEach(colorEl => {
@@ -665,40 +693,6 @@ Ampang Jaya, Selangor"></textarea>
     window.stripTelPrefix = stripTelPrefix;
     window.addTelPrefix = addTelPrefix;
 
-    // Design selector
-    let currentDesignId = 'template_1';
-    function applyDesignSelection() {
-      const select = document.getElementById('design-select');
-      if (select.options.length) select.value = currentDesignId;
-    }
-    KJAuth.authFetch('/api/designs').then(r => r.json()).then(designs => {
-      document.getElementById('design-select').innerHTML = designs.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
-      applyDesignSelection();
-    }).catch(() => {
-      document.getElementById('design-select').innerHTML = '<option value="template_1">Klasik Emerald</option>';
-    });
-    async function saveDesign() {
-      const btn = document.getElementById('design-btn');
-      const designId = document.getElementById('design-select').value;
-      btn.disabled = true;
-      try {
-        const res = await KJAuth.authFetch(`/api/template/${templateId}/design`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ designId }),
-        });
-        const json = await res.json();
-        if (json.success) {
-          currentDesignId = designId;
-          showToast('✅ ' + json.message);
-        } else showToast('❌ ' + json.error, true);
-      } catch (err) {
-        showToast('❌ Ralat menukar design: ' + err.message, true);
-      }
-      btn.disabled = false;
-    }
-    window.saveDesign = saveDesign;
-
     // Load existing data
     KJAuth.authFetch(`/api/template/${templateId}`)
       .then(r => r.json())
@@ -744,8 +738,9 @@ Ampang Jaya, Selangor"></textarea>
           document.getElementById('footer-preview').href = `/${data.SLUG}`;
         }
 
-        currentDesignId = data.DESIGN_ID || 'template_1';
-        applyDesignSelection();
+        currentPkg = ['bronze', 'platinum', 'gold'].includes(data.PACKAGE) ? data.PACKAGE : 'gold';
+        document.getElementById('guests-btn').style.display = currentPkg === 'bronze' ? 'none' : '';
+        applyPackageGating(currentPkg);
 
         document.getElementById('music-current').textContent = data.MUSIC_URL
           ? '🎵 Muzik semasa: ' + data.MUSIC_URL.split('/').pop()
@@ -790,6 +785,8 @@ Ampang Jaya, Selangor"></textarea>
         const mode = data.PREWEDDING_DISPLAY_MODE === 'slideshow' ? 'slideshow' : 'grid';
         const modeEl = form.querySelector(`input[name="PREWEDDING_DISPLAY_MODE"][value="${mode}"]`);
         if (modeEl) modeEl.checked = true;
+
+        updatePreviewBtnState();
       });
 
     // ── Aturcara (dynamic add/remove) ──
@@ -1153,6 +1150,7 @@ Ampang Jaya, Selangor"></textarea>
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       document.getElementById('tab-' + name).classList.add('active');
       btn.classList.add('active');
+      updatePreviewBtnState();
     }
 
     // Deceased toggle
@@ -1190,6 +1188,17 @@ Ampang Jaya, Selangor"></textarea>
       data.SCHEDULE = aturcaraData;
       data.CONTACTS = kenalanData;
       data.GIFT_ITEMS = giftItemsData;
+
+      // Pakej yang tiada feature ini tak boleh hantar *_ENABLED=true, walaupun nilai lama masih true
+      const PACKAGE_FEATURES_SAVE = {
+        bronze: [],
+        platinum: ['RSVP', 'WISHES', 'CUSTOM_SLUG'],
+        gold: ['RSVP', 'WISHES', 'CUSTOM_SLUG', 'MUSIC', 'PREWEDDING', 'GIFT'],
+      };
+      const allowedFeatures = PACKAGE_FEATURES_SAVE[currentPkg] || [];
+      if (!allowedFeatures.includes('PREWEDDING')) data.PREWEDDING_ENABLED = 'false';
+      if (!allowedFeatures.includes('MUSIC')) data.MUSIC_ENABLED = 'false';
+      if (!allowedFeatures.includes('GIFT')) data.GIFT_ENABLED = 'false';
 
       // Validate Pre-Wedding photos when enabled
       if (data.PREWEDDING_ENABLED === 'true' && preweddingPhotos.length < 2) {

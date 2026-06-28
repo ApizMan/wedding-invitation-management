@@ -27,23 +27,44 @@
 <style>
   .tpl-card { transition: transform .3s ease, box-shadow .3s ease; }
   .tpl-card:hover { transform: translateY(-6px); box-shadow: 0 22px 44px rgba(59,31,51,.18); }
-  .filter-chip { transition: all .2s ease; cursor: pointer; }
+  .filter-chip { transition: all .2s ease; cursor: pointer; display: block; width: 100%; text-align: left; }
   .filter-chip.active { background: #3b1f33; color: #fbf7f4; }
+  .tpl-card.hidden-by-filter { display: none; }
 </style>
 </head>
 <body class="text-plum-dark">
 
 <header class="sticky top-0 left-0 w-full z-40 backdrop-blur-md bg-cream/80 border-b border-rose-light">
-  <div class="max-w-7xl mx-auto flex items-center justify-between px-5 py-3">
+  <div class="max-w-7xl mx-auto flex items-center justify-between px-5 py-3 gap-4">
     <div class="flex items-center gap-3">
-      <button id="menu-btn" aria-label="Menu" class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-rose-light transition">
+      <button id="menu-btn" aria-label="Menu" class="md:hidden w-10 h-10 rounded-full flex items-center justify-center hover:bg-rose-light transition">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3b1f33" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </button>
       <a href="/" class="font-playfair font-bold text-lg sm:text-xl text-plum">Kad<span class="text-rose-gold">Jemputan</span></a>
     </div>
-    <button id="lang-toggle" class="text-xs font-bold px-3 py-1.5 rounded-full border border-plum/20 hover:bg-plum hover:text-cream transition">
-      <span data-lang="ms">EN</span><span data-lang="en">BM</span>
-    </button>
+    <nav class="hidden md:flex items-center gap-7 text-sm font-semibold text-plum">
+      <a href="/" class="hover:text-rose-gold transition"><span data-lang="ms">Halaman Utama</span><span data-lang="en">Homepage</span></a>
+      <a href="/catalog" class="hover:text-rose-gold transition"><span data-lang="ms">Katalog</span><span data-lang="en">Catalog</span></a>
+      <a href="/package" class="hover:text-rose-gold transition"><span data-lang="ms">Pakej</span><span data-lang="en">Package</span></a>
+      <a href="/faq" class="hover:text-rose-gold transition"><span data-lang="ms">Soalan Lazim</span><span data-lang="en">FAQ</span></a>
+      <a href="/contact" class="hover:text-rose-gold transition"><span data-lang="ms">Hubungi Kami</span><span data-lang="en">Contact Us</span></a>
+    </nav>
+    <div class="flex items-center gap-3">
+      <button id="lang-toggle" class="text-xs font-bold px-3 py-1.5 rounded-full border border-plum/20 hover:bg-plum hover:text-cream transition">
+        <span data-lang="ms">EN</span><span data-lang="en">BM</span>
+      </button>
+      <a id="nav-cta-guest" href="/profile" class="hidden sm:inline-block btn-glow bg-plum text-cream text-sm font-bold px-5 py-2 rounded-full">
+        <span data-lang="ms">Log Masuk / Daftar</span><span data-lang="en">Login / Register</span>
+      </a>
+      <div id="nav-cta-auth" class="hidden items-center gap-2">
+        <a href="/my/dashboard" aria-label="Dashboard" class="w-10 h-10 rounded-full flex items-center justify-center bg-plum text-cream hover:opacity-90 transition">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </a>
+        <button id="nav-logout-btn" aria-label="Log Keluar" class="w-10 h-10 rounded-full flex items-center justify-center border border-plum/20 text-plum hover:bg-rose-light transition">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </button>
+      </div>
+    </div>
   </div>
 </header>
 
@@ -56,7 +77,7 @@
     </button>
   </div>
   <nav class="flex-1 py-4 overflow-y-auto">
-    <a href="/" class="sidebar-link flex items-center gap-3 px-6 py-3.5 text-plum font-semibold"><span>🏠</span><span data-lang="ms">Landing Page</span><span data-lang="en">Landing Page</span></a>
+    <a href="/" class="sidebar-link flex items-center gap-3 px-6 py-3.5 text-plum font-semibold"><span>🏠</span><span data-lang="ms">Halaman Utama</span><span data-lang="en">Homepage</span></a>
     <a href="/catalog" class="sidebar-link flex items-center gap-3 px-6 py-3.5 text-plum font-semibold bg-rose-light/40"><span>🗂️</span><span data-lang="ms">Katalog</span><span data-lang="en">Catalog</span></a>
     <a href="/package" class="sidebar-link flex items-center gap-3 px-6 py-3.5 text-plum font-semibold"><span>💎</span><span data-lang="ms">Pakej</span><span data-lang="en">Package</span></a>
     <a href="/faq" class="sidebar-link flex items-center gap-3 px-6 py-3.5 text-plum font-semibold"><span>❓</span><span data-lang="ms">Soalan Lazim</span><span data-lang="en">FAQ</span></a>
@@ -76,64 +97,72 @@
     <div class="orn-divider mt-5"></div>
   </div>
 
-  <!-- Search & Filters -->
-  <div class="flex flex-col sm:flex-row gap-4 items-center justify-between mb-10 reveal">
-    <input type="text" placeholder="Cari template... / Search templates..." class="w-full sm:w-80 px-5 py-2.5 rounded-full border border-rose-light focus:outline-none focus:border-rose-gold text-sm" />
-    <div class="flex flex-wrap gap-2">
-      <span class="filter-chip active text-xs font-bold px-4 py-2 rounded-full border border-plum/20" data-filter="all"><span data-lang="ms">Semua</span><span data-lang="en">All</span></span>
-      <span class="filter-chip text-xs font-bold px-4 py-2 rounded-full border border-plum/20" data-filter="wedding"><span data-lang="ms">Perkahwinan</span><span data-lang="en">Wedding</span></span>
-      <span class="filter-chip text-xs font-bold px-4 py-2 rounded-full border border-plum/20" data-filter="aqiqah">Aqiqah</span>
-      <span class="filter-chip text-xs font-bold px-4 py-2 rounded-full border border-plum/20" data-filter="birthday"><span data-lang="ms">Hari Jadi</span><span data-lang="en">Birthday</span></span>
-      <span class="filter-chip text-xs font-bold px-4 py-2 rounded-full border border-plum/20" data-filter="corporate"><span data-lang="ms">Korporat</span><span data-lang="en">Corporate</span></span>
-    </div>
+  <!-- Search -->
+  <div class="mb-8 reveal">
+    <input type="text" id="catalog-search" placeholder="Cari template... / Search templates..." class="w-full px-6 py-3.5 rounded-full border border-rose-light focus:outline-none focus:border-rose-gold text-sm" />
   </div>
 
-  <!-- Grid -->
-  <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-7">
-    <div class="reveal tpl-card bg-white rounded-2xl overflow-hidden border border-rose-light shadow-sm">
-      <div class="aspect-[3/4] bg-gradient-to-br from-plum to-plum-dark flex items-center justify-center text-cream text-5xl">💍</div>
-      <div class="p-5">
-        <div class="flex items-center justify-between mb-1">
-          <h3 class="font-playfair font-bold text-plum">Klasik Emerald</h3>
-          <span class="text-[10px] font-bold text-rose-gold bg-rose-light/60 px-2 py-1 rounded-full">TEMPLATE_1</span>
-        </div>
-        <p class="text-xs text-plum/50 mb-4"><span data-lang="ms">Hijau Hutan &amp; Emas — Perkahwinan</span><span data-lang="en">Forest Green &amp; Gold — Wedding</span></p>
-        <div class="flex gap-2">
-          <a href="/template_1" target="_blank" class="flex-1 text-center btn-glow border-2 border-plum text-plum text-sm font-bold py-2.5 rounded-full"><span data-lang="ms">Demo</span><span data-lang="en">Demo</span></a>
-          <button type="button" onclick="openCheckout('template_1')" class="flex-1 text-center btn-glow bg-plum text-cream text-sm font-bold py-2.5 rounded-full"><span data-lang="ms">Pilih</span><span data-lang="en">Choose</span></button>
-        </div>
+  <div class="flex flex-col md:flex-row gap-8">
+    <!-- Filters (left) -->
+    <aside class="md:w-56 flex-shrink-0 reveal">
+      <div class="flex flex-row md:flex-col gap-2 overflow-x-auto md:overflow-visible">
+        <span class="filter-chip active text-xs font-bold px-4 py-2.5 rounded-full md:rounded-lg border border-plum/20 whitespace-nowrap" data-filter="all"><span data-lang="ms">Semua</span><span data-lang="en">All</span></span>
+        <span class="filter-chip text-xs font-bold px-4 py-2.5 rounded-full md:rounded-lg border border-plum/20 whitespace-nowrap" data-filter="wedding"><span data-lang="ms">Perkahwinan</span><span data-lang="en">Wedding</span></span>
+        <span class="filter-chip text-xs font-bold px-4 py-2.5 rounded-full md:rounded-lg border border-plum/20 whitespace-nowrap" data-filter="aqiqah">Aqiqah</span>
+        <span class="filter-chip text-xs font-bold px-4 py-2.5 rounded-full md:rounded-lg border border-plum/20 whitespace-nowrap" data-filter="birthday"><span data-lang="ms">Hari Jadi</span><span data-lang="en">Birthday</span></span>
+        <span class="filter-chip text-xs font-bold px-4 py-2.5 rounded-full md:rounded-lg border border-plum/20 whitespace-nowrap" data-filter="corporate"><span data-lang="ms">Korporat</span><span data-lang="en">Corporate</span></span>
       </div>
-    </div>
+    </aside>
 
-    <div class="reveal tpl-card bg-white rounded-2xl overflow-hidden border border-rose-light shadow-sm opacity-60">
-      <div class="aspect-[3/4] bg-gradient-to-br from-navy to-ink flex items-center justify-center text-cream text-5xl">🌙</div>
-      <div class="p-5">
-        <div class="flex items-center justify-between mb-1">
-          <h3 class="font-playfair font-bold text-plum">Bulan Sabit</h3>
-          <span class="text-[10px] font-bold text-plum/40 bg-plum/10 px-2 py-1 rounded-full"><span data-lang="ms">SEGERA</span><span data-lang="en">COMING SOON</span></span>
+    <!-- Grid (right) -->
+    <div class="flex-1">
+      <div id="catalog-grid" class="grid grid-cols-2 lg:grid-cols-4 gap-5">
+        <div class="reveal tpl-card bg-white rounded-2xl overflow-hidden border border-rose-light shadow-sm" data-category="wedding" data-name="klasik emerald wedding">
+          <div class="aspect-[3/4] bg-gradient-to-br from-plum to-plum-dark overflow-hidden">
+            <img src="/assets/templates/preview_template_1.png" alt="Klasik Emerald" class="w-full h-full object-cover">
+          </div>
+          <div class="p-4">
+            <div class="flex items-center justify-between mb-1">
+              <h3 class="font-playfair font-bold text-plum text-sm">Klasik Emerald</h3>
+            </div>
+            <span class="text-[9px] font-bold text-rose-gold bg-rose-light/60 px-2 py-0.5 rounded-full inline-block mb-3">WED001</span>
+            <div class="flex flex-col gap-2">
+              <a href="/template_1" target="_blank" class="text-center btn-glow border-2 border-plum text-plum text-xs font-bold py-2 rounded-full"><span data-lang="ms">Demo</span><span data-lang="en">Demo</span></a>
+              <button type="button" onclick="openCheckout('template_1')" class="text-center btn-glow bg-plum text-cream text-xs font-bold py-2 rounded-full"><span data-lang="ms">Pilih</span><span data-lang="en">Choose</span></button>
+            </div>
+          </div>
         </div>
-        <p class="text-xs text-plum/50 mb-4"><span data-lang="ms">Navy &amp; Emas — Aqiqah</span><span data-lang="en">Navy &amp; Gold — Aqiqah</span></p>
-        <button disabled class="block w-full text-center bg-plum/10 text-plum/40 text-sm font-bold py-2.5 rounded-full cursor-not-allowed"><span data-lang="ms">Segera Hadir</span><span data-lang="en">Coming Soon</span></button>
-      </div>
-    </div>
 
-    <div class="reveal tpl-card bg-white rounded-2xl overflow-hidden border border-rose-light shadow-sm opacity-60">
-      <div class="aspect-[3/4] bg-gradient-to-br from-rose to-rose-gold flex items-center justify-center text-plum-dark text-5xl">🎂</div>
-      <div class="p-5">
-        <div class="flex items-center justify-between mb-1">
-          <h3 class="font-playfair font-bold text-plum">Pesta Manis</h3>
-          <span class="text-[10px] font-bold text-plum/40 bg-plum/10 px-2 py-1 rounded-full"><span data-lang="ms">SEGERA</span><span data-lang="en">COMING SOON</span></span>
+        <div class="reveal tpl-card bg-white rounded-2xl overflow-hidden border border-rose-light shadow-sm opacity-60" data-category="aqiqah" data-name="bulan sabit aqiqah">
+          <div class="aspect-[3/4] bg-gradient-to-br from-navy to-ink flex items-center justify-center text-cream text-5xl">🌙</div>
+          <div class="p-4">
+            <h3 class="font-playfair font-bold text-plum text-sm mb-1">Bulan Sabit</h3>
+            <span class="text-[9px] font-bold text-plum/40 bg-plum/10 px-2 py-0.5 rounded-full inline-block mb-3"><span data-lang="ms">SEGERA</span><span data-lang="en">COMING SOON</span></span>
+            <button disabled class="block w-full text-center bg-plum/10 text-plum/40 text-xs font-bold py-2 rounded-full cursor-not-allowed"><span data-lang="ms">Segera Hadir</span><span data-lang="en">Coming Soon</span></button>
+          </div>
         </div>
-        <p class="text-xs text-plum/50 mb-4"><span data-lang="ms">Rose Gold — Hari Jadi</span><span data-lang="en">Rose Gold — Birthday</span></p>
-        <button disabled class="block w-full text-center bg-plum/10 text-plum/40 text-sm font-bold py-2.5 rounded-full cursor-not-allowed"><span data-lang="ms">Segera Hadir</span><span data-lang="en">Coming Soon</span></button>
+
+        <div class="reveal tpl-card bg-white rounded-2xl overflow-hidden border border-rose-light shadow-sm opacity-60" data-category="birthday" data-name="pesta manis birthday">
+          <div class="aspect-[3/4] bg-gradient-to-br from-rose to-rose-gold flex items-center justify-center text-plum-dark text-5xl">🎂</div>
+          <div class="p-4">
+            <h3 class="font-playfair font-bold text-plum text-sm mb-1">Pesta Manis</h3>
+            <span class="text-[9px] font-bold text-plum/40 bg-plum/10 px-2 py-0.5 rounded-full inline-block mb-3"><span data-lang="ms">SEGERA</span><span data-lang="en">COMING SOON</span></span>
+            <button disabled class="block w-full text-center bg-plum/10 text-plum/40 text-xs font-bold py-2 rounded-full cursor-not-allowed"><span data-lang="ms">Segera Hadir</span><span data-lang="en">Coming Soon</span></button>
+          </div>
+        </div>
       </div>
+
+      <p id="catalog-empty" class="hidden text-center text-plum/40 text-sm mt-12">
+        <span data-lang="ms">Tiada template dijumpai.</span>
+        <span data-lang="en">No templates found.</span>
+      </p>
+
+      <p class="text-center text-plum/40 text-sm mt-12 reveal">
+        <span data-lang="ms">Lebih banyak template akan ditambah dari semasa ke semasa.</span>
+        <span data-lang="en">More templates will be added over time.</span>
+      </p>
     </div>
   </div>
-
-  <p class="text-center text-plum/40 text-sm mt-12 reveal">
-    <span data-lang="ms">Lebih banyak template akan ditambah dari semasa ke semasa.</span>
-    <span data-lang="en">More templates will be added over time.</span>
-  </p>
 </section>
 
 <!-- Checkout Modal -->
@@ -142,11 +171,17 @@
     <h3 class="font-playfair text-xl font-bold text-plum mb-1"><span data-lang="ms">Pilih Pakej</span><span data-lang="en">Choose Package</span></h3>
     <p class="text-xs text-plum/50 mb-5"><span data-lang="ms">Template akan dikaitkan dengan akaun anda selepas tempahan.</span><span data-lang="en">The template will be linked to your account after checkout.</span></p>
     <div class="space-y-3 mb-6">
-      <label class="flex items-center gap-3 border border-rose-light rounded-xl p-3 cursor-pointer"><input type="radio" name="checkout-package" value="bronze" checked> <span class="font-bold text-sm">Bronze</span></label>
+      <label class="flex items-center gap-3 border border-rose-light rounded-xl p-3 cursor-pointer"><input type="radio" name="checkout-package" value="bronze"> <span class="font-bold text-sm">Bronze</span></label>
       <label class="flex items-center gap-3 border border-rose-light rounded-xl p-3 cursor-pointer"><input type="radio" name="checkout-package" value="platinum"> <span class="font-bold text-sm">Platinum</span></label>
       <label class="flex items-center gap-3 border border-rose-light rounded-xl p-3 cursor-pointer"><input type="radio" name="checkout-package" value="gold"> <span class="font-bold text-sm">Gold</span></label>
     </div>
-    <div class="mb-5">
+    <div id="checkout-payment-section" class="hidden mb-5">
+      <div class="bg-rose-light/30 border border-rose-light rounded-xl p-4 mb-5 text-center">
+        <p class="text-xs font-bold text-plum mb-3"><span data-lang="ms">Imbas QR atau Pindahan Bank</span><span data-lang="en">Scan QR or Bank Transfer</span></p>
+        <img src="/assets/images/qr_payment_checkout.png" alt="QR Payment" onclick="openQrView()" class="w-40 h-40 object-contain mx-auto mb-3 rounded-lg border border-rose-light bg-white cursor-pointer" />
+        <p class="text-[11px] text-plum/50"><span data-lang="ms">No. Akaun Bank</span><span data-lang="en">Bank Account No.</span></p>
+        <p class="font-bold text-sm text-plum tracking-wide">1406 9020 5040 16</p>
+      </div>
       <label class="block text-xs font-bold text-plum mb-1.5"><span data-lang="ms">Gambar Resit Pembayaran</span><span data-lang="en">Payment Receipt Image</span></label>
       <input type="file" id="checkout-receipt" accept="image/*" class="w-full text-xs border border-rose-light rounded-lg px-3 py-2" />
       <p class="text-[11px] text-plum/40 mt-1"><span data-lang="ms">Muat naik bukti transfer bank/QR. Maksimum 5MB.</span><span data-lang="en">Upload proof of bank transfer/QR. Max 5MB.</span></p>
@@ -159,18 +194,48 @@
   </div>
 </div>
 
+<!-- QR Image View Modal -->
+<div id="qr-view-modal" class="hidden fixed inset-0 bg-ink/70 z-[60] flex items-center justify-center p-5" onclick="closeQrView()">
+  <img src="/assets/images/qr_payment_checkout.png" alt="QR Payment" class="max-w-[90vw] max-h-[85vh] rounded-xl border border-rose-light bg-white" />
+</div>
+
 <script src="/marketing-assets/_shared.js"></script>
 <script>
+  var activeFilter = 'all';
+  var searchInput = document.getElementById('catalog-search');
+  var catalogCards = Array.prototype.slice.call(document.querySelectorAll('#catalog-grid .tpl-card'));
+  var catalogEmpty = document.getElementById('catalog-empty');
+
+  function applyCatalogFilter() {
+    var query = searchInput.value.trim().toLowerCase();
+    var visibleCount = 0;
+    catalogCards.forEach(function (card) {
+      var matchesFilter = activeFilter === 'all' || card.getAttribute('data-category') === activeFilter;
+      var matchesSearch = !query || card.getAttribute('data-name').indexOf(query) !== -1;
+      var show = matchesFilter && matchesSearch;
+      card.classList.toggle('hidden-by-filter', !show);
+      if (show) visibleCount++;
+    });
+    catalogEmpty.classList.toggle('hidden', visibleCount !== 0);
+  }
+
   document.querySelectorAll('.filter-chip').forEach(function (chip) {
     chip.addEventListener('click', function () {
       document.querySelectorAll('.filter-chip').forEach(function (c) { c.classList.remove('active'); });
       chip.classList.add('active');
+      activeFilter = chip.getAttribute('data-filter');
+      applyCatalogFilter();
     });
   });
+
+  searchInput.addEventListener('input', applyCatalogFilter);
 
   var checkoutDesignId = null;
   function openCheckout(designId) {
     checkoutDesignId = designId;
+    document.querySelectorAll('input[name="checkout-package"]').forEach(function (r) { r.checked = false; });
+    document.getElementById('checkout-payment-section').classList.add('hidden');
+    document.getElementById('checkout-receipt').value = '';
     document.getElementById('checkout-error').classList.add('hidden');
     document.getElementById('checkout-modal').classList.remove('hidden');
   }
@@ -180,12 +245,34 @@
   window.openCheckout = openCheckout;
   window.closeCheckout = closeCheckout;
 
+  function openQrView() {
+    document.getElementById('qr-view-modal').classList.remove('hidden');
+  }
+  function closeQrView() {
+    document.getElementById('qr-view-modal').classList.add('hidden');
+  }
+  window.openQrView = openQrView;
+  window.closeQrView = closeQrView;
+
+  document.querySelectorAll('input[name="checkout-package"]').forEach(function (radio) {
+    radio.addEventListener('change', function () {
+      document.getElementById('checkout-payment-section').classList.remove('hidden');
+    });
+  });
+
   async function submitCheckout() {
-    var pkg = document.querySelector('input[name="checkout-package"]:checked').value;
+    var pkgInput = document.querySelector('input[name="checkout-package"]:checked');
     var receiptInput = document.getElementById('checkout-receipt');
     var btn = document.getElementById('checkout-submit');
     var errEl = document.getElementById('checkout-error');
     errEl.classList.add('hidden');
+
+    if (!pkgInput) {
+      errEl.textContent = 'Sila pilih pakej dahulu.';
+      errEl.classList.remove('hidden');
+      return;
+    }
+    var pkg = pkgInput.value;
 
     if (!receiptInput.files[0]) {
       errEl.textContent = 'Sila muat naik gambar resit pembayaran.';

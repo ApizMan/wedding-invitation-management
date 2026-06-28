@@ -23,6 +23,22 @@
   var savedLang = localStorage.getItem('kj-lang');
   if (savedLang === 'en' || savedLang === 'ms') setLang(savedLang);
 
+  var ctaGuest = document.getElementById('nav-cta-guest');
+  var ctaAuth = document.getElementById('nav-cta-auth');
+  var logoutBtn = document.getElementById('nav-logout-btn');
+  if (window.KJAuth && ctaGuest && ctaAuth) {
+    if (KJAuth.getStoredToken()) {
+      ctaGuest.style.display = 'none';
+      ctaAuth.style.display = 'flex';
+    } else {
+      ctaGuest.style.display = '';
+      ctaAuth.style.display = 'none';
+    }
+  }
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', function () { KJAuth.logout('/'); });
+  }
+
   var revealEls = document.querySelectorAll('.reveal, .reveal-scale');
   var io = new IntersectionObserver(function (entries) {
     entries.forEach(function (entry) {

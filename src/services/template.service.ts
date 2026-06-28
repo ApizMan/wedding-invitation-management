@@ -24,6 +24,10 @@ export async function createWedding(data: Record<string, unknown>): Promise<stri
   return docRef.id;
 }
 
+export async function deleteTemplate(tid: string): Promise<void> {
+  await db.collection('templates').doc(tid).delete();
+}
+
 function renderScheduleHtml(schedule: any[]): string {
   if (!Array.isArray(schedule) || schedule.length === 0) return '';
   return schedule.map(item => `

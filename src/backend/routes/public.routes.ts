@@ -1,3 +1,4 @@
+import fs from 'fs';
 import path from 'path';
 import { Router, Request, Response, NextFunction } from 'express';
 import { db } from '../../database/firebase';
@@ -5,8 +6,11 @@ import { getConfig, renderTemplate } from '../../services/template.service';
 import { RESERVED_SLUGS, findTemplateBySlug } from '../../services/slug.service';
 import { TEMPLATES_META } from '../../services/template.types';
 import { hasFeature, resolvePackage } from '../../services/package.service';
+import { sendContactEmail, sendContactTelegram } from '../../services/notify.service';
 
 const FRONTEND_MARKETING_DIR = path.join(__dirname, '..', '..', '..', 'frontend', 'marketing');
+const TEMPLATE_PREVIEWS_DIR = path.join(__dirname, '..', '..', '..', 'public', 'assets', 'templates');
+const IMAGE_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.webp']);
 
 export const publicRouter = Router();
 
@@ -32,6 +36,27 @@ publicRouter.get('/contact', (req: Request, res: Response) => {
 
 publicRouter.get('/profile', (req: Request, res: Response) => {
   res.sendFile(path.join(FRONTEND_MARKETING_DIR, 'profile.html'));
+});
+
+// List template preview images for the homepage hero shuffle (public)
+publicRouter.get('/api/template-previews', (req: Request, res: Response) => {
+  try {
+    const files = fs.readdirSync(TEMPLATE_PREVIEWS_DIR)
+      .filter(f => IMAGE_EXTENSIONS.has(path.extname(f).toLowerCase()))
+      .sort();
+    res.json(files.map(f => `/assets/templates/${f}`));
+  } catch (err: any) {
+    res.json([]);
+  }
+});
+
+// Count of ready designs per category, for the homepage category section (public)
+publicRouter.get('/api/design-counts', (req: Request, res: Response) => {
+  const counts: Record<string, number> = { wedding: 0, aqiqah: 0, birthday: 0, corporate: 0 };
+  Object.values(TEMPLATES_META).forEach(meta => {
+    counts[meta.category] = (counts[meta.category] || 0) + 1;
+  });
+  res.json(counts);
 });
 
 // Render each fixed template dynamically
@@ -157,6 +182,21 @@ publicRouter.post('/api/template/:id/gift-item/:itemId/reserve', async (req: Req
 
     if (result.error) return res.status(result.status).json({ error: result.error });
     res.json({ success: true, message: 'Tempahan berjaya! Terima kasih.', items: result.items });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Contact Us form submission (public) — notifies via email + Telegram
+publicRouter.post('/api/contact', async (req: Request, res: Response) => {
+  try {
+    const { name, email, message } = req.body;
+    if (!name || !email || !message) {
+      return res.status(400).json({ error: 'Maklumat tidak lengkap' });
+    }
+    const payload = { name: String(name).trim(), email: String(email).trim(), message: String(message).trim() };
+    await Promise.allSettled([sendContactEmail(payload), sendContactTelegram(payload)]);
+    res.json({ success: true, message: 'Terima kasih! Mesej anda telah diterima.' });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

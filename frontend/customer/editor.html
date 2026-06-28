@@ -47,7 +47,7 @@
       <span style="color:rgba(59,31,51,.2);">/</span>
       <span style="font-family:'Playfair Display',serif;color:#3b1f33;font-size:1rem;">Edit Kad Jemputan</span>
     </div>
-    <a id="preview-btn" href="#" target="_blank" style="color:#3b1f33;font-size:.8rem;text-decoration:none;border:1px solid #f2dde3;padding:7px 16px;border-radius:999px;">👁 Pratonton</a>
+    <a id="preview-btn" href="#" target="_blank" style="color:#3b1f33;font-size:.8rem;text-decoration:none;border:1px solid #f2dde3;padding:7px 16px;border-radius:999px;pointer-events:none;opacity:.4;cursor:not-allowed;" title="Lengkapkan semua maklumat dahulu untuk pratonton">👁 Pratonton</a>
   </header>
 
   <div style="flex:1;padding:28px 24px;max-width:900px;margin:0 auto;width:100%;">
@@ -349,6 +349,19 @@
 
     document.getElementById('preview-btn').href = `/w/${templateId}`;
 
+    function updatePreviewBtnState() {
+      const form = document.getElementById('editor-form');
+      const previewBtn = document.getElementById('preview-btn');
+      const requiredEls = Array.from(form.querySelectorAll('input[type=text], input[type=tel], textarea'))
+        .filter(el => el.offsetParent !== null && !el.closest('[id^="gift-items-list"]') && !el.closest('#aturcara-list') && !el.closest('#kenalan-list'));
+      const allFilled = requiredEls.every(el => el.value.trim() !== '');
+      previewBtn.style.pointerEvents = allFilled ? '' : 'none';
+      previewBtn.style.opacity = allFilled ? '' : '.4';
+      previewBtn.style.cursor = allFilled ? '' : 'not-allowed';
+      previewBtn.title = allFilled ? '' : 'Lengkapkan semua maklumat dahulu untuk pratonton';
+    }
+    document.getElementById('editor-form').addEventListener('input', updatePreviewBtnState);
+
     KJAuth.authFetch(`/api/my/template/${templateId}`)
       .then(r => r.json())
       .then(data => {
@@ -411,6 +424,8 @@
         const mode = data.PREWEDDING_DISPLAY_MODE === 'slideshow' ? 'slideshow' : 'grid';
         const modeEl = form.querySelector(`input[name="PREWEDDING_DISPLAY_MODE"][value="${mode}"]`);
         if (modeEl) modeEl.checked = true;
+
+        updatePreviewBtnState();
       });
 
     const HARI_BM  = ['Ahad','Isnin','Selasa','Rabu','Khamis','Jumaat','Sabtu'];
@@ -659,6 +674,7 @@
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       document.getElementById('tab-' + name).classList.add('active');
       btn.classList.add('active');
+      updatePreviewBtnState();
     }
     window.switchTab = switchTab;
 

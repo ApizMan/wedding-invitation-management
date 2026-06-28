@@ -2,22 +2,19 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import crypto from 'crypto';
-import multer from 'multer';
 import ffmpeg from 'fluent-ffmpeg';
 import ffmpegPath from 'ffmpeg-static';
+import { singleFileUpload } from './multipart.util';
 
 if (ffmpegPath) ffmpeg.setFfmpegPath(ffmpegPath);
 
-export const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 25 * 1024 * 1024 },
-  fileFilter: (req, file, cb) => {
-    if (!file.mimetype.startsWith('audio/')) {
-      return cb(new Error('Hanya fail audio dibenarkan'));
-    }
-    cb(null, true);
-  },
-});
+export const upload = {
+  single: (fieldName: string) =>
+    singleFileUpload(fieldName, {
+      maxFileSize: 25 * 1024 * 1024,
+      fileFilter: (mimetype) => mimetype.startsWith('audio/'),
+    }),
+};
 
 export function compressAudio(inputBuffer: Buffer): Promise<Buffer> {
   return new Promise((resolve, reject) => {

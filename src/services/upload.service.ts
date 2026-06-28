@@ -1,16 +1,13 @@
-import multer from 'multer';
 import sharp from 'sharp';
+import { singleFileUpload } from './multipart.util';
 
-export const uploadImage = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 },
-  fileFilter: (req, file, cb) => {
-    if (!file.mimetype.startsWith('image/')) {
-      return cb(new Error('Hanya fail imej dibenarkan'));
-    }
-    cb(null, true);
-  },
-});
+export const uploadImage = {
+  single: (fieldName: string) =>
+    singleFileUpload(fieldName, {
+      maxFileSize: 5 * 1024 * 1024,
+      fileFilter: (mimetype) => mimetype.startsWith('image/'),
+    }),
+};
 
 // Compress + resize any uploaded image to a web-friendly JPEG before it ever reaches Storage
 export async function compressImage(inputBuffer: Buffer): Promise<{ buffer: Buffer; contentType: string }> {

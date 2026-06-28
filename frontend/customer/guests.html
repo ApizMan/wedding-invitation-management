@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Senarai Tetamu — KadJemputan</title>
+  <script src="/shared-assets/auth-client.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = { theme: { extend: {
+      colors: { plum:'#3b1f33','plum-light':'#5c3354','plum-dark':'#241220',rose:'#c98ba0','rose-light':'#f2dde3','rose-gold':'#caa15f',cream:'#fbf7f4' },
+      fontFamily: { playfair:['"Playfair Display"','serif'], lato:['Lato','sans-serif'] },
+    }}};
+  </script>
+  <style>
+    body { font-family:'Lato',sans-serif; background:#fbf7f4; }
+    .field-group { background:#fff; border:1px solid #f2dde3; border-radius:12px; padding:24px; margin-bottom:20px; }
+    .field-group h3 { font-family:'Playfair Display',serif; color:#3b1f33; font-size:1rem; margin-bottom:16px; padding-bottom:10px; border-bottom:1px solid #f2dde3; }
+    table { width:100%; min-width:560px; border-collapse:collapse; font-size:.85rem; }
+    th { text-align:left; color:#caa15f; font-size:.7rem; letter-spacing:.12em; text-transform:uppercase; padding:10px 12px; border-bottom:1px solid #f2dde3; }
+    td { padding:10px 12px; border-bottom:1px solid #f8f1ee; color:#3b1f33; }
+    tr:hover td { background:#fbf7f4; }
+    .badge { font-size:.72rem; padding:3px 10px; border-radius:20px; white-space:nowrap; }
+    .badge-hadir { background:rgba(34,197,94,.12); color:#15803d; }
+    .badge-tidak { background:rgba(220,38,38,.1); color:#b91c1c; }
+    .field-hint { color:rgba(59,31,51,.4); font-size:.72rem; margin-top:4px; }
+    .stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:28px; }
+    @media(max-width:760px) { .stats-row { grid-template-columns:repeat(2,1fr); } }
+  </style>
+</head>
+<body class="text-plum-dark">
+
+<header class="sticky top-0 w-full bg-cream/90 backdrop-blur-md border-b border-rose-light z-40">
+  <div class="max-w-5xl mx-auto flex items-center justify-between px-6 py-4">
+    <div class="flex items-center gap-3 text-sm">
+      <a href="/my/dashboard" class="font-bold text-plum/60 hover:text-plum transition">Dashboard</a>
+      <span class="text-plum/20">/</span>
+      <a id="editor-link" href="#" class="font-bold text-plum/60 hover:text-plum transition">Editor</a>
+      <span class="text-plum/20">/</span>
+      <span class="font-playfair font-bold text-plum">Senarai Tetamu</span>
+    </div>
+    <a href="#" onclick="KJAuth.logout('/profile'); return false;" class="text-xs font-bold px-4 py-2 rounded-full border border-plum/20 hover:bg-plum hover:text-cream transition">Log Keluar</a>
+  </div>
+</header>
+
+<section class="max-w-5xl mx-auto px-6 py-10">
+
+  <div class="stats-row">
+    <div class="bg-white border border-rose-light rounded-xl p-5">
+      <p class="text-rose-gold text-xs uppercase tracking-wide font-bold mb-1">Jumlah Respons</p>
+      <p id="stat-total" class="font-playfair text-2xl font-bold text-plum">—</p>
+    </div>
+    <div class="bg-white border border-rose-light rounded-xl p-5">
+      <p class="text-green-700/70 text-xs uppercase tracking-wide font-bold mb-1">Datang</p>
+      <p id="stat-hadir" class="font-playfair text-2xl font-bold text-green-700">—</p>
+    </div>
+    <div class="bg-white border border-rose-light rounded-xl p-5">
+      <p class="text-red-700/70 text-xs uppercase tracking-wide font-bold mb-1">Tidak Datang</p>
+      <p id="stat-tidak" class="font-playfair text-2xl font-bold text-red-700">—</p>
+    </div>
+    <div class="bg-white border border-rose-light rounded-xl p-5">
+      <p class="text-rose-gold text-xs uppercase tracking-wide font-bold mb-1">Jumlah Kehadiran (Pax)</p>
+      <p id="stat-pax" class="font-playfair text-2xl font-bold text-plum">—</p>
+    </div>
+  </div>
+
+  <div class="field-group">
+    <h3>Senarai Kehadiran</h3>
+    <div style="overflow-x:auto;">
+      <table>
+        <thead>
+          <tr><th>Nama</th><th>Telefon</th><th>Status</th><th>Bilangan</th><th>Tarikh Hantar</th></tr>
+        </thead>
+        <tbody id="attendance-tbody"></tbody>
+      </table>
+    </div>
+    <p class="field-hint" id="attendance-empty" style="display:none;margin-top:12px;">Belum ada respons kehadiran.</p>
+  </div>
+
+  <div class="field-group">
+    <h3>Senarai Ucapan</h3>
+    <div style="overflow-x:auto;">
+      <table>
+        <thead>
+          <tr><th>Nama</th><th>Ucapan</th><th>Tarikh Hantar</th></tr>
+        </thead>
+        <tbody id="wishes-tbody"></tbody>
+      </table>
+    </div>
+    <p class="field-hint" id="wishes-empty" style="display:none;margin-top:12px;">Belum ada ucapan.</p>
+  </div>
+
+</section>
+
+<script>
+  if (!KJAuth.getStoredToken()) { location.href = '/profile'; }
+
+  const templateId = location.pathname.split('/')[3]; // /my/template/{id}/guests
+  document.getElementById('editor-link').href = `/my/template/${templateId}/edit`;
+
+  function escHtml(str) {
+    return String(str ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+  function formatDate(iso) {
+    const d = new Date(iso);
+    if (isNaN(d)) return '—';
+    return d.toLocaleString('ms-MY', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+  }
+
+  async function loadGuests() {
+    try {
+      const res = await KJAuth.authFetch(`/api/my/template/${templateId}/rsvps`);
+      const entries = await res.json();
+      if (!res.ok) throw new Error(entries.error || 'Ralat');
+      const attendance = entries.filter(e => e.type === 'attendance');
+      const wishes = entries.filter(e => e.type === 'wish');
+
+      const hadirList = attendance.filter(e => e.attendance === 'hadir');
+      const tidakList = attendance.filter(e => e.attendance === 'tidak_hadir');
+      const totalPax = hadirList.reduce((sum, e) => sum + (Number(e.pax) || 1), 0);
+
+      document.getElementById('stat-total').textContent = attendance.length;
+      document.getElementById('stat-hadir').textContent = hadirList.length;
+      document.getElementById('stat-tidak').textContent = tidakList.length;
+      document.getElementById('stat-pax').textContent = totalPax;
+
+      const attBody = document.getElementById('attendance-tbody');
+      attBody.innerHTML = attendance.map(e => `
+        <tr>
+          <td>${escHtml(e.name)}</td>
+          <td>${escHtml(e.phone || '—')}</td>
+          <td><span class="badge ${e.attendance === 'hadir' ? 'badge-hadir' : 'badge-tidak'}">${e.attendance === 'hadir' ? 'Datang' : 'Tidak Datang'}</span></td>
+          <td>${e.attendance === 'hadir' ? escHtml(e.pax || 1) : '—'}</td>
+          <td>${formatDate(e.submittedAt)}</td>
+        </tr>`).join('');
+      document.getElementById('attendance-empty').style.display = attendance.length ? 'none' : 'block';
+
+      const wishBody = document.getElementById('wishes-tbody');
+      wishBody.innerHTML = wishes.map(e => `
+        <tr>
+          <td>${escHtml(e.name)}</td>
+          <td style="max-width:420px;">${escHtml(e.message)}</td>
+          <td>${formatDate(e.submittedAt)}</td>
+        </tr>`).join('');
+      document.getElementById('wishes-empty').style.display = wishes.length ? 'none' : 'block';
+    } catch (err) {
+      document.getElementById('attendance-empty').textContent = err.message || 'Ralat memuatkan data.';
+      document.getElementById('attendance-empty').style.display = 'block';
+    }
+  }
+  loadGuests();
+  setInterval(loadGuests, 8000);
+</script>
+</body>
+</html>
