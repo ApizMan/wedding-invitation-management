@@ -13,6 +13,7 @@ export interface TemplateMeta {
 // admin/customer alongside the design name so support requests can reference a stable identifier.
 export const TEMPLATES_META: Record<string, TemplateMeta> = {
   template_1: { id: 'template_1', name: 'Klasik Emerald', theme: 'Hijau Hutan & Emas', preview: '/template_1', code: 'WED001', category: 'wedding' },
+  template_2: { id: 'template_2', name: 'Minimalis Sage', theme: 'Sage & Terracotta', preview: '/template_2', code: 'WED002', category: 'wedding' },
 };
 
 export const DEFAULT_DESIGN_ID = 'template_1';
