@@ -42,7 +42,7 @@ Sistem SaaS kad jemputan digital (wedding/aqiqah/birthday/corporate) dengan:
 2. **PENTING**: Env var custom (`SERVICE_ACCOUNT_PATH`, `STORAGE_BUCKET_NAME` dalam `.env`) TIDAK boleh guna prefix `FIREBASE_`/`X_GOOGLE_`/`EXT_` — prefix ini reserved oleh platform Firebase Functions dan akan buat function gagal load (`Failed to load environment variables from .env`).
 3. `functions/.env` perlu disalin manual dari `.env` root (TIDAK auto-sync) — emulator/Cloud Functions baca env dari `functions/.env`, bukan root `.env`. Value dengan spasi (cth path Windows) perlu di-quote (`KEY="C:\path with space"`).
 4. Sebelum deploy, jalankan `cd functions && npm run build` (compile TypeScript + copy assets) dan test dengan `firebase emulators:start --only functions,hosting`.
-5. `firebase deploy --only hosting,functions` untuk deploy sebenar — perlukan Firebase plan **Blaze** (pay-as-you-go).
+5. `firebase deploy --only hosting,functions` untuk deploy sebenar — perlukan Firebase plan **Blaze** (pay-as-you-go). **Status: project `wedd-inv-mangement` sudah di plan Blaze sejak 2026-06-28** — jangan tanya soalan ini lagi sebelum deploy, terus jalankan.
 6. **PENTING (production)**: `functions/src/index.ts` `onRequest()` MESTI pass `{ invoker: 'public' }` — tanpa ni Cloud Run v2 return 403 Forbidden untuk semua request via Hosting rewrite (project policy tak auto-grant `allUsers` invoker lagi).
 7. **PENTING (production)**: `src/database/firebase.ts` detect Cloud Functions runtime via env var `K_SERVICE` (auto-disuntik platform) — bila wujud, `initializeApp()` dipanggil TANPA `credential: cert(...)` supaya guna Application Default Credentials automatik. JANGAN cuba baca `SERVICE_ACCOUNT_PATH` dalam Cloud Functions — path fail lokal (laptop dev) tak wujud di server, akan crash function dengan `ENOENT`.
 8. Domain custom (`kadjemputan.com`) disambung selepas deploy via Firebase Console → Hosting → Add custom domain (perlu DNS records di registrar domain — tindakan luar repo).
@@ -111,6 +111,8 @@ Sistem SaaS kad jemputan digital (wedding/aqiqah/birthday/corporate) dengan:
 ## Log Perubahan
 
 Selepas setiap tugasan selesai, tambah SATU baris ringkas di bawah (format: `- YYYY-MM-DD: <ringkasan 1 ayat>`). Jangan tulis ringkasan panjang/perenggan di sini — tujuannya supaya sesi akan datang nampak sejarah perubahan besar dengan pantas. Letak entri terbaru di ATAS.
+
+- 2026-06-28: Deploy kemaskini ke production (`firebase deploy --only hosting,functions`) selepas user upgrade ke plan Blaze — termasuk fix semakan login sebelum buka modal checkout di catalog.html; semua route utama (`/`, `/catalog`, `/profile`, `/template_1`, `/admin/login`) disahkan 200 live.
 
 - 2026-06-28: **Deploy pertama berjaya** ke `https://kadjemputan.web.app` (semua route /, /catalog, /api/*, /template_1, /admin/login disahkan 200 live). Dua isu production dibetulkan: (1) `src/database/firebase.ts` cuma load service account JSON dari fail path bila BUKAN Cloud Functions — dikesan via env var `K_SERVICE` (disuntik platform); dalam Cloud Functions guna `initializeApp()` tanpa credential supaya automatik pakai Application Default Credentials (fail path local tak wujud di server). (2) `functions/src/index.ts` `onRequest()` perlu `{ invoker: 'public' }` secara explicit — tanpa ni Cloud Run v2 function return 403 Forbidden bila diakses melalui Hosting rewrite (org policy terkini tak auto-grant `allUsers` invoker).
 

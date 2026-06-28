@@ -232,6 +232,10 @@
 
   var checkoutDesignId = null;
   function openCheckout(designId) {
+    if (!KJAuth.getStoredToken()) {
+      location.href = '/profile';
+      return;
+    }
     checkoutDesignId = designId;
     document.querySelectorAll('input[name="checkout-package"]').forEach(function (r) { r.checked = false; });
     document.getElementById('checkout-payment-section').classList.add('hidden');
