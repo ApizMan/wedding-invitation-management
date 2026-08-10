@@ -67,7 +67,9 @@ if (require.main === module) {
     console.log('║     RSVP Wedding System — Server Berjalan       ║');
     console.log('╠════════════════════════════════════════════════╣');
     console.log(`║  Landing  : http://localhost:${PORT}/              ║`);
-    console.log(`║  Template : http://localhost:${PORT}/template_1    ║`);
+    Object.keys(TEMPLATES_META).forEach(tid => {
+      console.log(`║  Template : http://localhost:${PORT}/${tid}`);
+    });
     console.log(`║  Customer : http://localhost:${PORT}/profile        ║`);
     console.log(`║  Admin    : http://localhost:${PORT}/admin/login    ║`);
     console.log('╚════════════════════════════════════════════════╝\n');

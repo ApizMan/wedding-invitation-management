@@ -4,10 +4,13 @@ Panduan ini WAJIB dirujuk semula sebelum menamatkan sebarang tugasan dalam proje
 
 ## Checklist sebelum tamat setiap tugasan
 
-1. **Matikan semua local dev server yang dimulakan semasa sesi ini.**
+WAJIB: sebelum lapor sebarang tugasan selesai, kembali rujuk & jalankan SEMUA langkah dalam checklist ini (bukan hanya langkah yang dirasakan relevan).
+
+1. **Matikan HANYA local dev server yang dimulakan oleh Claude semasa sesi ini.**
    - Semak port 3000: `netstat -ano | grep ':3000' | grep LISTENING`
-   - Jika ada proses, `taskkill //F //PID <pid>` untuk matikannya.
-   - Jangan tinggalkan `npm run dev` / `nodemon` berjalan di background selepas kerja selesai, melainkan user secara eksplisit minta server kekal hidup untuk mereka uji.
+   - Jika proses itu dimulakan oleh Claude (background process/Bash tool semasa sesi ini), `taskkill //F //PID <pid>` untuk matikannya.
+   - JANGAN matikan dev server yang user jalankan sendiri di terminal mereka (cth. `npm run dev` dengan nodemon) — biar ia restart secara automatik ikut file watcher, jangan sentuh proses tersebut.
+   - Jangan tinggalkan dev server yang Claude mulakan berjalan di background selepas kerja selesai, melainkan user secara eksplisit minta server kekal hidup untuk mereka uji.
 
 2. **Semua proses upload fail (gambar) MESTI dimampatkan (compress) sebelum disimpan ke Firebase Storage.**
    - Guna `compressImage()` dari [src/services/upload.service.ts](src/services/upload.service.ts) (resize max 1600px, JPEG quality 78) untuk SEMUA upload imej — resit pembayaran, gambar pre-wedding, QR code hadiah, gambar barang hadiah, dll.
@@ -103,6 +106,18 @@ Sistem SaaS kad jemputan digital (wedding/aqiqah/birthday/corporate) dengan:
 
 **Nota**: route GET halaman (page shells) sentiasa pulangkan 200 — auth check sebenar berlaku bila JS panggil `authFetch()` ke endpoint `/api/*`. Jika ubah/tambah route baru, kemaskini jadual ini.
 
+## Cipta Design Kad Baharu (template_N)
+
+Bila user beri spec design kad baharu dalam format: `Folder Name`, `Category`, `Code Template`, `Theme`, `Color`, `Entry Card/Landing Page` (gaya opening), dan `Details Card` (teks penuh jemputan — nama pengantin, tarikh, lokasi, aturcara, keluarga, kenalan, dll), ikut langkah ini:
+
+1. **Cipta `frontend/templates/template_N/index.html`** — guna `template_2/index.html` sebagai rangka asas (satu fail HTML lengkap dengan CSS + JS terbenam, TIADA fail berasingan). WAJIB guna placeholder token sedia ada (`{{GROOM_NAME}}`, `{{BRIDE_NAME}}`, `{{AKAD_*}}`, `{{MAJLIS_*}}`, `{{SCHEDULE_HTML}}`, `{{CONTACTS_HTML}}`, `{{WISHES_HTML}}`, `{{PREWEDDING_HTML}}`, `{{GIFT_*}}`, `{{THEME_VARS}}`, `{{TEMPLATE_ID}}`, dll — lihat senarai penuh dalam `template_1`/`template_2`) supaya terus serasi dengan [src/services/template.service.ts](src/services/template.service.ts) tanpa ubah backend. Tukar hanya font, warna, animasi opening/ending, dan hiasan visual ikut tema yang diminta — jangan cipta placeholder baru melainkan benar-benar perlu.
+2. **TIADA emoji** dalam design kad (🌸🦋🎉 dll) — semua hiasan visual (bunga, rama-rama, ornamen) WAJIB dilukis sebagai inline SVG mengikut palet warna tema (`var(--color-gold)`, warna custom tema), bukan character emoji. Emoji render tidak konsisten merentas platform/OS dan nampak tidak profesional untuk produk digital berbayar.
+3. **Daftar dalam `TEMPLATES_META`** di [src/services/template.types.ts](src/services/template.types.ts) — `id`, `name` (nama design dalam BM), `theme`, `preview: '/template_N'`, `code` (ikut kategori: `WED0xx` wedding, `AQ0xx` aqiqah, `BYD0xx` birthday, `COR0xx` corporate — running number seterusnya dalam kategori sama), `category`.
+4. **Tambah kad dalam katalog awam** `frontend/marketing/catalog.html` — copy struktur kad `template_2` (image preview, nama, kod, butang Demo `/template_N` + butang Pilih `openCheckout('template_N')`), letak `data-category` betul.
+5. **Imej preview**: perlukan `public/assets/templates/preview_template_N.png` (screenshot design) — jika belum ada screenshot sebenar, maklumkan kepada user bahawa fail ini perlu diganti kemudian (jangan hasilkan imej palsu).
+6. **Demo data ("Details Card")**: user's standing instruction — bila user beri spec "Details Card" (nama pengantin/tarikh/aturcara/keluarga/kenalan sebenar) semasa minta template baharu, WAJIB terus `set(..., { merge: true })` data tersebut ke dalam Firestore doc `templates/{template_N}` (guna `DESIGN_ID: 'template_N'` supaya `renderTemplate` papar design yang betul) supaya route demo `/template_N` terus papar kandungan sebenar — JANGAN tulis script "seeder" berasingan yang disimpan dalam repo; lakukan sebagai satu tindakan terus (one-off script buat & padam, atau terus guna Firestore Admin SDK dalam sesi) tanpa meninggalkan fail seeder kekal dalam codebase.
+7. Jalankan checklist standard (langkah 1-3 di atas) sebelum lapor selesai.
+
 ## Bahasa & Gaya
 
 - UI dan mesej ralat dalam Bahasa Melayu (ikut konvensyen sedia ada di seluruh codebase).
@@ -112,6 +127,16 @@ Sistem SaaS kad jemputan digital (wedding/aqiqah/birthday/corporate) dengan:
 
 Selepas setiap tugasan selesai, tambah SATU baris ringkas di bawah (format: `- YYYY-MM-DD: <ringkasan 1 ayat>`). Jangan tulis ringkasan panjang/perenggan di sini — tujuannya supaya sesi akan datang nampak sejarah perubahan besar dengan pantas. Letak entri terbaru di ATAS.
 
+- 2026-07-04: Betulkan opening screen `template_3` — tukar dari split-curtain minimalis kepada animasi buka sampul surat sebenar (flap 3D `rotateX`, kad jemputan meluncur keluar dari dalam sampul, seal wax coral yang pudar bila dibuka). Perkaya seksyen Hero yang sebelum ini terlalu kosong — tambah kad bertepi (framed card) dengan backdrop-blur, tekstur titik lembut, 4 hiasan sudut line-art (dulu 2), medallion ornament di atas, garis pemisah "&" antara nama, dan paparan lokasi majlis — supaya lebih graphic & intuitive berbanding whitespace kosong sebelum ini.
+
+- 2026-07-04: Tambah auto-scroll perlahan (`startAutoScroll()`/`stopAutoScroll()`, ~36px/saat via `requestAnimationFrame`) selepas kad dibuka (`openInvitation()`) di ketiga-tiga template (`template_1`, `template_2`, `template_3`) — auto-scroll berhenti terus (`{ once: true }` pada `wheel`/`touchmove`/`keydown` arrow/PageUp/PageDown/Home/End/Space) sebaik sahaja user scroll secara manual, dan berhenti sendiri bila sampai hujung halaman.
+
+- 2026-07-04: Redesign penuh tema `template_3` — buang tema "Taman Kanak-Kanak" (ungu/matcha/rama-rama) sepenuhnya, gantikan dengan tema minimalis putih + coral-red (`#e8574a`) merujuk reference design luaran (jemputan.me/preview/435/vin053, disahkan via screenshot user oleh kerana WebFetch tak boleh render SPA JS-heavy). Font baharu: Alex Brush (script nama pengantin), Jost (sans-serif label), Cormorant Garamond (serif italic). Opening screen kini split-curtain minimalis (dua panel kelabu terang + seal bulat putih di tengah, bukan sampul surat/gerbang). Hiasan burung walet & bunga peony line-art custom-drawn (inline SVG, bukan asset luar — tiada lesen untuk artwork reference) di empat penjuru hero & footer. Semua placeholder token & JS logic (RSVP, ucapan, hadiah, pre-wedding, muzik, countdown) dikekalkan tanpa ubah backend.
+
+- 2026-07-04: Gantikan semua hiasan SVG rama-rama/bunga custom di `template_3` dengan asset sebenar user (`public/assets/images/template_3/butterfly_1.gif`, `many_butterfly.gif`, `garden_1.png`, `garden_2.png`) — `garden_2.png` (gerbang bunga) jadi latar belakang skrin pembukaan/gate di belakang sampul surat, `many_butterfly.gif` sebagai kelompok rama-rama berterbangan di atas gerbang, `garden_1.png` (pengantin berjalan melalui gerbang) jadi visual penutup di footer, `butterfly_1.gif` diguna berulang (dengan flip/saiz berbeza) merentas semua seksyen menggantikan SVG hiasan lama.
+
+- 2026-07-04: Betulkan bug kritikal `renderTemplate()` (template.service.ts) yang sebabkan `/template_3` papar design template_1 — punca: wedding doc tanpa `DESIGN_ID` fallback ke `DEFAULT_DESIGN_ID` bukan ke id sendiri, jadi hit pertama pada `/template_3` tersimpan permanent `DESIGN_ID: 'template_1'` dalam Firestore; padam doc rosak & fallback kini utamakan `wid` sendiri jika ia design id yang sah. Gantikan SEMUA emoji dalam `template_3` dengan inline SVG (rama-rama/bunga custom ikut palet Ungu & Matcha) — emoji tidak konsisten merentas platform & tidak sesuai untuk produk berbayar. Seed Firestore doc `templates/template_3` terus dengan data "Details Card" sebenar (Muhammad Nafiz & Nur Atiqah) ikut arahan tetap user: data demo template mesti masuk terus ke Firestore doc design tersebut, bukan script seeder berasingan. Tambah rule "tiada emoji" & "demo data terus ke Firestore" dalam panduan "Cipta Design Kad Baharu" di CLAUDE.md.
+- 2026-07-04: Tambah design kad ketiga `template_3` ("Taman Kanak-Kanak", tema Ungu & Matcha, kod WED003) di [frontend/templates/template_3/index.html](frontend/templates/template_3/index.html) — daftar dalam `TEMPLATES_META` & katalog awam; opening screen guna gaya "buka sampul surat" (envelope), hiasan rama-rama & bunga mekar merentas semua seksyen; belum ada `preview_template_3.png` sebenar (perlu screenshot). Tambah panduan "Cipta Design Kad Baharu" dalam CLAUDE.md supaya proses ini konsisten untuk template seterusnya.
 - 2026-06-28: Deploy kemaskini ke production (`firebase deploy --only hosting,functions`) selepas tambah template_2 ke katalog dan opening screen/gate-transition — semua route utama (`/`, `/catalog`, `/template_1`, `/template_2`, `/admin/login`, `/api/template-previews`) disahkan 200 live di `https://kadjemputan.web.app`.
 - 2026-06-28: Tambah template_2 ("Minimalis Sage", WED002) ke katalog awam (`frontend/marketing/catalog.html`) menggantikan placeholder "Bulan Sabit", guna preview `preview_template_2.png`; redesign opening screen template_2 jadi split-panel asimetri (berlainan konsep daripada template_1), tambah butang "Buka Jemputan" dengan animasi transisi gerbang terbuka (sliding split-panel); betulkan bug animation-shorthand collision yang sebabkan butang invisible; betulkan layout responsive (CSS Grid + width class idiomatic) untuk date/location text supaya tak terpotong di mobile.
 

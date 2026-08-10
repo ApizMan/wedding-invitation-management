@@ -647,7 +647,32 @@
       setupBottomNavGrid();
       const opening = document.getElementById('opening'), main = document.getElementById('main');
       opening.classList.add('dismiss');
-      setTimeout(() => { opening.style.display='none'; main.style.opacity='1'; spawnPetals(); initScrollReveal(); initCountdown(); }, 950);
+      setTimeout(() => { opening.style.display='none'; main.style.opacity='1'; spawnPetals(); initScrollReveal(); initCountdown(); startAutoScroll(); }, 950);
+    }
+    // ── Auto-scroll after opening — cancels the instant the user scrolls manually ──
+    let autoScrollActive = false;
+    let autoScrollRaf = null;
+    function startAutoScroll() {
+      autoScrollActive = true;
+      const SPEED = 0.6; // px per frame (~36px/s at 60fps)
+      const cancel = () => stopAutoScroll();
+      window.addEventListener('wheel', cancel, { passive: true, once: true });
+      window.addEventListener('touchmove', cancel, { passive: true, once: true });
+      window.addEventListener('keydown', (e) => {
+        if (['ArrowUp','ArrowDown','PageUp','PageDown','Home','End',' '].includes(e.key)) cancel();
+      }, { once: true });
+      function step() {
+        if (!autoScrollActive) return;
+        const atBottom = window.innerHeight + window.scrollY >= document.body.scrollHeight - 2;
+        if (atBottom) { stopAutoScroll(); return; }
+        window.scrollBy(0, SPEED);
+        autoScrollRaf = requestAnimationFrame(step);
+      }
+      autoScrollRaf = requestAnimationFrame(step);
+    }
+    function stopAutoScroll() {
+      autoScrollActive = false;
+      if (autoScrollRaf) cancelAnimationFrame(autoScrollRaf);
     }
     function setupBottomNavGrid() {
       const inner = document.querySelector('#bottom-nav .bn-inner');

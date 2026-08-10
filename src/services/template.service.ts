@@ -107,7 +107,11 @@ export async function renderTemplate(wid: string, config: TemplateConfig): Promi
   const data = { ...config[wid] };
 
   // DESIGN_ID picks which visual layout (frontend/templates/{designId}/index.html) renders this wedding's data.
-  let designId = data.DESIGN_ID && TEMPLATES_META[data.DESIGN_ID] ? data.DESIGN_ID : DEFAULT_DESIGN_ID;
+  // Fallback: if this wedding doc has no DESIGN_ID yet but its own doc id IS a known design
+  // (the /template_N demo route calls renderTemplate(tid, ...) with wid === tid), render itself
+  // instead of defaulting to DEFAULT_DESIGN_ID — otherwise every fresh demo route would show template_1.
+  const fallbackDesignId = TEMPLATES_META[wid] ? wid : DEFAULT_DESIGN_ID;
+  let designId = data.DESIGN_ID && TEMPLATES_META[data.DESIGN_ID] ? data.DESIGN_ID : fallbackDesignId;
   if (data.DESIGN_ID !== designId) {
     data.DESIGN_ID = designId;
     saveTemplate(wid, { DESIGN_ID: designId }).catch(() => {});

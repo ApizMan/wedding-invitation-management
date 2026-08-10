@@ -14,6 +14,7 @@ export interface TemplateMeta {
 export const TEMPLATES_META: Record<string, TemplateMeta> = {
   template_1: { id: 'template_1', name: 'Klasik Emerald', theme: 'Hijau Hutan & Emas', preview: '/template_1', code: 'WED001', category: 'wedding' },
   template_2: { id: 'template_2', name: 'Minimalis Sage', theme: 'Sage & Terracotta', preview: '/template_2', code: 'WED002', category: 'wedding' },
+  template_3: { id: 'template_3', name: 'Taman Kanak-Kanak', theme: 'Ungu & Matcha', preview: '/template_3', code: 'WED003', category: 'wedding' },
 };
 
 export const DEFAULT_DESIGN_ID = 'template_1';
